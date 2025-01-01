@@ -3,13 +3,13 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/k0kubun/go-ansi"
+	"github.com/schollz/progressbar/v3"
 	"log"
-  "strings"
 	"net/http"
 	"os"
 	"os/exec"
-  "github.com/k0kubun/go-ansi"
-  "github.com/schollz/progressbar/v3"
+	"strings"
 )
 
 type Repository struct {
@@ -20,61 +20,30 @@ type Repository struct {
 var repoDestinationPre string
 var includeArchived string
 var gitlabToken string
-var	gitlabHost  string
+var gitlabHost string
+var pullError []string
 
 func main() {
 
-  // load environment variables first, they will be overridden
-  // by argument flags if specified.
+	// load environment variables first, they will be overridden
+	// by argument flags if specified.
 	if err := loadEnvironmentVariables(); err != nil {
 		log.Fatalf("Error loading environment variables: %v", err)
 	}
 
-  // require at least the destination argument
-  if len(os.Args) <= 1 {
-		fmt.Println("Usage:   gogitlabber --destination=<directory>")
-		fmt.Println("Example: gogitlabber --destination=/tmp/repos")
-		os.Exit(1)
-	}
+  // manage all argument magic
+	manageArguments()
 
-  // parse arguments
-	for _, arg := range os.Args[1:] {
-    switch {
-
-    case strings.HasPrefix(arg, "--destination="):
-			repoDestinationPre = strings.TrimPrefix(arg, "--destination=")
-
-    case strings.HasPrefix(arg, "--gitlab-api-token="):
-      gitlabToken = strings.TrimPrefix(arg, "--gitlab-api-token=")
-
-    case strings.HasPrefix(arg, "--gitlab-url="):
-			gitlabHost = strings.TrimPrefix(arg, "--gitlab-url=")
-
-    default:
-      fmt.Println("Usage:   gogitlabber --destination=<directory>")
-      fmt.Println("Example: gogitlabber --destination=/tmp/repos")
-      os.Exit(1)
-    }
-	}
-
-  // fail if destination is unknown
-  if repoDestinationPre == "" {
-    fmt.Println("Fatal: No destination found.")
-		fmt.Println("Example: gogitlabber --destination=/tmp/repos")
-		fmt.Println("Usage: gogitlabber --destination=/tmp/repos")
-    os.Exit(1)
-  }
-
-  // fetch repository information
+	// fetch repository information from gitlab
 	repositories, err := fetchRepositories()
 	if err != nil {
 		log.Fatalf("Error fetching repositories: %v", err)
 	}
 
-  // manage found repositories
+	// manage found repositories
 	checkoutRepositories(repositories)
+	printPullerror(pullError)
 }
-
 
 func loadEnvironmentVariables() error {
 	gitlabToken = os.Getenv("GITLAB_API_KEY")
@@ -89,16 +58,87 @@ func loadEnvironmentVariables() error {
 	return nil
 }
 
+func manageArguments() {
+
+	// require at least the destination argument
+	if len(os.Args) <= 1 {
+		fmt.Println("Usage:   gogitlabber --destination=<directory>")
+		fmt.Println("Example: gogitlabber --destination=$HOME/repos")
+		os.Exit(1)
+	}
+
+	// parse arguments
+	for _, arg := range os.Args[1:] {
+		switch {
+
+		case strings.HasPrefix(arg, "--archived="):
+			includeArchived = strings.TrimPrefix(arg, "--archived=")
+
+		case strings.HasPrefix(arg, "--destination="):
+			repoDestinationPre = strings.TrimPrefix(arg, "--destination=")
+
+		case strings.HasPrefix(arg, "--gitlab-api-token="):
+			gitlabToken = strings.TrimPrefix(arg, "--gitlab-api-token=")
+
+		case strings.HasPrefix(arg, "--gitlab-url="):
+			gitlabHost = strings.TrimPrefix(arg, "--gitlab-url=")
+
+		default:
+			fmt.Println("Usage:   gogitlabber --destination=<directory>")
+			fmt.Println("Example: gogitlabber --destination=$HOME/repos")
+			os.Exit(1)
+		}
+	}
+
+	// --archive options:
+	// - any      (fetch both)
+	// - only     (fetch archived only)
+	// - excluded (fetch non-archived only - default)
+	if includeArchived == "" {
+		includeArchived = "excluded"
+	}
+
+	if includeArchived != "any" &&
+		includeArchived != "only" &&
+		includeArchived != "excluded" {
+		fmt.Println("Usage: gogitlabber --archived=(any|excluded|only)")
+		os.Exit(1)
+	}
+
+	// fail if destination is unknown
+	if repoDestinationPre == "" {
+		fmt.Println("Fatal: No destination found.")
+		fmt.Println("Example: gogitlabber --destination=$HOME/repos")
+		fmt.Println("Usage: gogitlabber --destination=$HOME/repos")
+		os.Exit(1)
+	}
+
+  // add slash if not provided to directory
+  if !strings.HasSuffix(repoDestinationPre, "/") {
+    repoDestinationPre += "/"
+  }
+}
 
 func fetchRepositories() ([]Repository, error) {
 
-  archived   := "archived=false"
-  membership := "membership=true"
-  perpage    := "per_page=100"
-  order      := "order_by=name"
+	// default options
+	membership := "membership=true"
+	perpage := "per_page=100"
+	order := "order_by=name"
 
-	url := fmt.Sprintf("https://%s/api/v4/projects?%s&%s&%s&%s", 
-                     gitlabHost, membership, order, archived, perpage)
+	// configure archived options
+	var archived string
+	switch {
+	case includeArchived == "excluded":
+		archived = "&archived=false"
+	case includeArchived == "only":
+		archived = "&archived=true"
+	default:
+		archived = ""
+	}
+
+	url := fmt.Sprintf("https://%s/api/v4/projects?%s&%s&%s%s",
+		gitlabHost, membership, order, perpage, archived)
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -126,67 +166,80 @@ func fetchRepositories() ([]Repository, error) {
 	return repositories, nil
 }
 
-
 func checkoutRepositories(repositories []Repository) {
-  repoCount := len(repositories)
+	repoCount := len(repositories)
 
-  fmt.Printf("Found %d repositories", repoCount)
+	fmt.Printf("Found %d repositories", repoCount)
 
-  // make progressbar using:
-  // - github.com/k0kubun/go-ansi
-  // - github.com/schollz/progressbar/v3
-  bar := progressbar.NewOptions(
-    repoCount,
-    progressbar.OptionSetWriter(ansi.NewAnsiStdout()),
-    progressbar.OptionEnableColorCodes(true),
-    progressbar.OptionShowCount(),
-    progressbar.OptionSetElapsedTime(true),
-    progressbar.OptionSetPredictTime(false),
-    progressbar.OptionSetWidth(20),
-    progressbar.OptionSetDescription("Getting your repositories..."),
-    progressbar.OptionSetTheme(progressbar.Theme{
-      Saucer:        "[green]=[reset]",
-      SaucerHead:    "[green]>[reset]",
-      SaucerPadding: " ",
-      BarStart:      "[",
-      BarEnd:        "]",
-    }),
-  )
+	// make progressbar using:
+	// - github.com/k0kubun/go-ansi
+	// - github.com/schollz/progressbar/v3
+	bar := progressbar.NewOptions(
+		repoCount,
+		progressbar.OptionSetWriter(ansi.NewAnsiStdout()),
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetElapsedTime(true),
+		progressbar.OptionSetPredictTime(false),
+		progressbar.OptionSetWidth(20),
+		progressbar.OptionSetDescription("Getting your repositories..."),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "[green]=[reset]",
+			SaucerHead:    "[green]>[reset]",
+			SaucerPadding: " ",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+	)
 
 	for _, repo := range repositories {
 
-    repoName := string(repo.PathWithNamespace)
-    gitlabUrl := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git", 
-                              gitlabToken, gitlabHost, repoName)
+		repoName := string(repo.PathWithNamespace)
+		gitlabUrl := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git",
+			gitlabToken, gitlabHost, repoName)
 
 		repoDestination := repoDestinationPre + repoName
 
-		cloneCmd         := exec.Command("git", "clone", gitlabUrl, repoDestination)
+		cloneCmd := exec.Command("git", "clone", gitlabUrl, repoDestination)
 		cloneOutput, err := cloneCmd.CombinedOutput()
 
 		if err != nil {
-      
-      // if repo already exists, try to pull the latest changes
-      if strings.Contains(string(cloneOutput),
-          "already exists and is not an empty directory") {
-        pullRepositories(repoDestination)
-        bar.Add(1)
-        continue
-      }
+
+			// if repo already exists, try to pull the latest changes
+			if strings.Contains(string(cloneOutput),
+				"already exists and is not an empty directory") {
+				pullRepositories(repoDestination)
+				bar.Add(1)
+				continue
+			}
 			log.Printf("❌ Error cloning %s: %v\n%s", repoName, err, string(cloneOutput))
-      bar.Add(1)
+			bar.Add(1)
 			continue
 		}
-    bar.Add(1)
+		bar.Add(1)
+	}
+
+	// print empty line as the bar does not do that
+	fmt.Println("")
+}
+
+func pullRepositories(repoDestination string) {
+	pullCmd := exec.Command("git", "-C", repoDestination, "pull", "origin")
+	pullOutput, err := pullCmd.CombinedOutput()
+
+	if err != nil {
+		if strings.Contains(string(pullOutput),
+			"You have unstaged changes") {
+			pullError = append(pullError, repoDestination)
+		}
 	}
 }
 
+func printPullerror(pullError []string) {
 
-func pullRepositories(repoDestination string) {
-	pullCmd     := exec.Command("git", "-C", repoDestination, "pull", "origin")
-  output, err := pullCmd.CombinedOutput()
-
-  if err != nil {
-    log.Printf("❌ Error pulling %s: %v\n%s", repoDestination, err, string(output))
-  }
+	if len(pullError) > 0 {
+		for _, repo := range pullError {
+			fmt.Printf("❕%s has unstaged changes.\n", repo)
+		}
+	}
 }

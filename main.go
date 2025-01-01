@@ -175,8 +175,6 @@ func fetchRepositories() ([]Repository, error) {
 func checkoutRepositories(repositories []Repository) {
 	repoCount := len(repositories)
 
-	fmt.Printf("Found %d repositories", repoCount)
-
 	// make progressbar using:
 	// - github.com/k0kubun/go-ansi
 	// - github.com/schollz/progressbar/v3

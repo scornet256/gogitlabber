@@ -12,21 +12,23 @@ import (
 	"strings"
 )
 
+// userdata
+var repoDestinationPre string
+var includeArchived string
+var gitlabToken string
+var gitlabHost string
+
+// functional vars
+var pullError []string
+
 type Repository struct {
 	Name              string `json:"name"`
 	PathWithNamespace string `json:"path_with_namespace"`
 }
 
-var repoDestinationPre string
-var includeArchived string
-var gitlabToken string
-var gitlabHost string
-var pullError []string
-
 func main() {
 
-	// load environment variables first, they will be overridden
-	// by argument flags if specified.
+	// environment variables < arguments
 	if err := loadEnvironmentVariables(); err != nil {
 		log.Fatalf("Error loading environment variables: %v", err)
 	}
@@ -56,7 +58,7 @@ func manageArguments() {
 
 	// require at least the destination argument
 	if len(os.Args) <= 1 {
-    printUsage()
+		printUsage()
 		os.Exit(1)
 	}
 
@@ -77,7 +79,7 @@ func manageArguments() {
 			gitlabHost = strings.TrimPrefix(arg, "--gitlab-url=")
 
 		default:
-      printUsage()
+			printUsage()
 			os.Exit(1)
 		}
 	}
@@ -85,7 +87,7 @@ func manageArguments() {
 	// fail if destination is unknown
 	if repoDestinationPre == "" {
 		fmt.Println("Fatal: No destination found.")
-    printUsage()
+		printUsage()
 		os.Exit(1)
 	}
 
@@ -109,18 +111,18 @@ func manageArguments() {
 		os.Exit(1)
 	}
 
-  // verify GitLab input
-  if gitlabHost == "" {
+	// verify GitLab input
+	if gitlabHost == "" {
 		fmt.Println("Fatal: No GitLab server configured.")
-    printUsage()
+		printUsage()
 		os.Exit(1)
-  }
+	}
 
-  if gitlabToken == "" {
+	if gitlabToken == "" {
 		fmt.Println("Fatal: No GitLab API Token found.")
-    printUsage()
+		printUsage()
 		os.Exit(1)
-  }
+	}
 }
 
 func fetchRepositories() ([]Repository, error) {
@@ -248,16 +250,16 @@ func printPullerror(pullError []string) {
 }
 
 func printUsage() {
-  fmt.Println("Usage: gogitlabber")
-  fmt.Println("         --archived=(any|excluded|only)")
-  fmt.Println("         --destination=$HOME/Documents")
-  fmt.Println("         --gitlab-url=gitlab.example.com")
-  fmt.Println("         --gitlab-token=<supersecrettoken>")
-  fmt.Println("")
-  fmt.Println("You can also set these environment variables:")
-  fmt.Println("  GOGITLABBER_ARCHIVED=(any|excluded|only)")
-  fmt.Println("  GOGITLABBER_DESTINATION=$HOME/Documents")
-  fmt.Println("  GITLAB_API_TOKEN=<supersecrettoken>")
-  fmt.Println("  GITLAB_URL=gitlab.example.com")
-  fmt.Println("")
+	fmt.Println("Usage: gogitlabber")
+	fmt.Println("         --archived=(any|excluded|only)")
+	fmt.Println("         --destination=$HOME/Documents")
+	fmt.Println("         --gitlab-url=gitlab.example.com")
+	fmt.Println("         --gitlab-token=<supersecrettoken>")
+	fmt.Println("")
+	fmt.Println("You can also set these environment variables:")
+	fmt.Println("  GOGITLABBER_ARCHIVED=(any|excluded|only)")
+	fmt.Println("  GOGITLABBER_DESTINATION=$HOME/Documents")
+	fmt.Println("  GITLAB_API_TOKEN=<supersecrettoken>")
+	fmt.Println("  GITLAB_URL=gitlab.example.com")
+	fmt.Println("")
 }

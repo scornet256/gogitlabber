@@ -1,4 +1,5 @@
 package main
+
 import (
 	"encoding/json"
 	"fmt"
@@ -30,7 +31,7 @@ func main() {
 		log.Fatalf("Error loading environment variables: %v", err)
 	}
 
-  // manage all argument magic
+	// manage all argument magic
 	manageArguments()
 
 	// fetch repository information from gitlab
@@ -45,15 +46,9 @@ func main() {
 }
 
 func loadEnvironmentVariables() error {
-	gitlabToken = os.Getenv("GITLAB_API_KEY")
-	if gitlabToken == "" {
-		return fmt.Errorf("GITLAB_API_KEY environment variable is not set")
-	}
-
 	gitlabHost = os.Getenv("GITLAB_HOSTNAME")
-	if gitlabHost == "" {
-		return fmt.Errorf("GITLAB_HOSTNAME environment variable is not set")
-	}
+	gitlabToken = os.Getenv("GITLAB_API_TOKEN")
+	repoDestinationPre = os.Getenv("GOGITLABBER_DESTINATION")
 	return nil
 }
 
@@ -61,8 +56,7 @@ func manageArguments() {
 
 	// require at least the destination argument
 	if len(os.Args) <= 1 {
-		fmt.Println("Usage:   gogitlabber --destination=<directory>")
-		fmt.Println("Example: gogitlabber --destination=$HOME/repos")
+    printUsage()
 		os.Exit(1)
 	}
 
@@ -83,10 +77,21 @@ func manageArguments() {
 			gitlabHost = strings.TrimPrefix(arg, "--gitlab-url=")
 
 		default:
-			fmt.Println("Usage:   gogitlabber --destination=<directory>")
-			fmt.Println("Example: gogitlabber --destination=$HOME/repos")
+      printUsage()
 			os.Exit(1)
 		}
+	}
+
+	// fail if destination is unknown
+	if repoDestinationPre == "" {
+		fmt.Println("Fatal: No destination found.")
+    printUsage()
+		os.Exit(1)
+	}
+
+	// add slash 🎩🎸 if not provided
+	if !strings.HasSuffix(repoDestinationPre, "/") {
+		repoDestinationPre += "/"
 	}
 
 	// --archive options:
@@ -104,17 +109,17 @@ func manageArguments() {
 		os.Exit(1)
 	}
 
-	// fail if destination is unknown
-	if repoDestinationPre == "" {
-		fmt.Println("Fatal: No destination found.")
-		fmt.Println("Example: gogitlabber --destination=$HOME/repos")
-		fmt.Println("Usage: gogitlabber --destination=$HOME/repos")
+  // verify GitLab input
+  if gitlabHost == "" {
+		fmt.Println("Fatal: No GitLab server configured.")
+    printUsage()
 		os.Exit(1)
-	}
+  }
 
-  // add slash if not provided to directory
-  if !strings.HasSuffix(repoDestinationPre, "/") {
-    repoDestinationPre += "/"
+  if gitlabToken == "" {
+		fmt.Println("Fatal: No GitLab API Token found.")
+    printUsage()
+		os.Exit(1)
   }
 }
 
@@ -235,10 +240,24 @@ func pullRepositories(repoDestination string) {
 }
 
 func printPullerror(pullError []string) {
-
 	if len(pullError) > 0 {
 		for _, repo := range pullError {
 			fmt.Printf("❕%s has unstaged changes.\n", repo)
 		}
 	}
+}
+
+func printUsage() {
+  fmt.Println("Usage: gogitlabber")
+  fmt.Println("         --archived=(any|excluded|only)")
+  fmt.Println("         --destination=$HOME/Documents")
+  fmt.Println("         --gitlab-url=gitlab.example.com")
+  fmt.Println("         --gitlab-token=<supersecrettoken>")
+  fmt.Println("")
+  fmt.Println("You can also set these environment variables:")
+  fmt.Println("  GOGITLABBER_ARCHIVED=(any|excluded|only)")
+  fmt.Println("  GOGITLABBER_DESTINATION=$HOME/Documents")
+  fmt.Println("  GITLAB_API_TOKEN=<supersecrettoken>")
+  fmt.Println("  GITLAB_URL=gitlab.example.com")
+  fmt.Println("")
 }

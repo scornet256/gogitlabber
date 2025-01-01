@@ -178,6 +178,11 @@ func checkoutRepositories(repositories []Repository) {
 	// make progressbar using:
 	// - github.com/k0kubun/go-ansi
 	// - github.com/schollz/progressbar/v3
+  barPrefix := fmt.Sprintf("Getting your one and only repository...") 
+  if repoCount > 1 {
+    barPrefix = fmt.Sprintf("Getting your repositories...") 
+  }
+
 	bar := progressbar.NewOptions(
 		repoCount,
 		progressbar.OptionSetWriter(ansi.NewAnsiStdout()),
@@ -186,7 +191,7 @@ func checkoutRepositories(repositories []Repository) {
 		progressbar.OptionSetElapsedTime(true),
 		progressbar.OptionSetPredictTime(false),
 		progressbar.OptionSetWidth(20),
-		progressbar.OptionSetDescription("Getting your repositories..."),
+		progressbar.OptionSetDescription(barPrefix),
 		progressbar.OptionSetTheme(progressbar.Theme{
 			Saucer:        "[green]=[reset]",
 			SaucerHead:    "[green]>[reset]",

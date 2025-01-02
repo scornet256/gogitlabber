@@ -66,7 +66,8 @@ func manageArguments() {
 	if includeArchived != "any" &&
 		includeArchived != "only" &&
 		includeArchived != "excluded" {
-		fmt.Println("Usage: gogitlabber --archived=(any|excluded|only)")
+		fmt.Println("Fatal: Wrong archive option found.")
+    printUsage()
 		os.Exit(1)
 	}
 

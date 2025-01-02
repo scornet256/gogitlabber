@@ -9,6 +9,6 @@ go-build:
     - "GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o gogitlabber cmd/gogitlabber/*.go"
     - "zip gogitlabber.zip gogitlabber"
   artifacts:
-    name: "${CI_PROJECT_NAME}-${CI_COMMIT_TAG}"
+    name: "${CI_PROJECT_NAME}"
     paths:
       - "gogitlabber.zip"

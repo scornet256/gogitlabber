@@ -62,9 +62,7 @@ func fetchRepositories() ([]Repository, error) {
 func checkoutRepositories(repositories []Repository) {
 	repoCount := len(repositories)
 
-	// make progressbar using:
-	// - github.com/k0kubun/go-ansi
-	// - github.com/schollz/progressbar/v3
+	// make progressbar
 	barPrefix := fmt.Sprintf("Getting your one and only repository...")
 	if repoCount > 1 {
 		barPrefix = fmt.Sprintf("Getting your repositories...")
@@ -108,7 +106,7 @@ func checkoutRepositories(repositories []Repository) {
 				bar.Add(1)
 				continue
 			}
-			log.Printf("❌ Error cloning %s: %v\n%s", repoName, err, string(cloneOutput))
+			log.Printf("❌ error cloning %s: %v\n%s", repoName, err, string(cloneOutput))
 			bar.Add(1)
 			continue
 		}
@@ -124,8 +122,7 @@ func pullRepositories(repoDestination string) {
 	pullOutput, err := pullCmd.CombinedOutput()
 
 	if err != nil {
-		if strings.Contains(string(pullOutput),
-			"You have unstaged changes") {
+		if strings.Contains(string(pullOutput), "You have unstaged changes") {
 			pullError = append(pullError, repoDestination)
 		}
 	}

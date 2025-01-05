@@ -20,11 +20,6 @@ type Repository struct {
 
 func main() {
 
-	// environment variables < arguments
-	if err := loadEnvironmentVariables(); err != nil {
-		log.Fatalf("Error loading environment variables: %v", err)
-	}
-
 	// manage all argument magic
 	manageArguments()
 

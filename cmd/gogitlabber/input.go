@@ -7,13 +7,6 @@ import (
 	"strings"
 )
 
-func loadEnvironmentVariables() error {
-	gitlabHost = os.Getenv("GITLAB_HOSTNAME")
-	gitlabToken = os.Getenv("GITLAB_API_TOKEN")
-	repoDestinationPre = os.Getenv("GOGITLABBER_DESTINATION")
-	return nil
-}
-
 func manageArguments() {
 
 	var archivedFlag = flag.String("archived", "excluded", "to include archived repositories (any|excluded|exclusive)\nenv = GOGITLABBER_ARCHIVED\n")
@@ -29,17 +22,40 @@ func manageArguments() {
 	gitlabToken = *tokenFlag
 	gitlabHost = *hostFlag
 
-	// fail if destination is unknown
-	if repoDestinationPre == "" {
-		fmt.Println("Fatal: No destination found.")
+	// use environment variable if set, otherwise use flag value
+	if envHost := os.Getenv("GITLAB_HOSTNAME"); envHost != "" {
+		gitlabHost = envHost
+	}
+
+	if envToken := os.Getenv("GITLAB_API_TOKEN"); envToken != "" {
+		gitlabToken = envToken
+	}
+
+  if envRepoDest := os.Getenv("GOGITLABBER_DESTINATION"); envRepoDest != "" {
+    repoDestinationPre = envRepoDest
+  }
+
+  if envArchived := os.Getenv("GOGITLABBER_ARCHIVED"); envArchived != "" {
+    includeArchived = envArchived
+  }
+
+  // fail if no configuration found
+	if gitlabHost == "" {
+		fmt.Println("Fatal: No GitLab Host found.")
 		flag.PrintDefaults()
-		fmt.Println("")
 		os.Exit(1)
 	}
 
-	// add slash 🎩🎸 if not provided
-	if !strings.HasSuffix(repoDestinationPre, "/") {
-		repoDestinationPre += "/"
+	if gitlabToken == "" {
+		fmt.Println("Fatal: No GitLab API Token found.")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	if repoDestinationPre == "" {
+		fmt.Println("Fatal: No destination found.")
+		flag.PrintDefaults()
+		os.Exit(1)
 	}
 
 	// --archive options:
@@ -58,24 +74,9 @@ func manageArguments() {
 		os.Exit(1)
 	}
 
-	// use environment variable if set, otherwise use flag value
-	if envHost := os.Getenv("GITLAB_HOSTNAME"); envHost != "" {
-		gitlabHost = envHost
+	// add slash 🎩🎸 if not provided
+	if !strings.HasSuffix(repoDestinationPre, "/") {
+		repoDestinationPre += "/"
 	}
 
-	if envToken := os.Getenv("GITLAB_API_TOKEN"); envToken != "" {
-		gitlabToken = envToken
-	}
-
-	if gitlabHost == "" {
-		fmt.Println("Fatal: No GitLab Host found.")
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
-	if gitlabToken == "" {
-		fmt.Println("Fatal: No GitLab API Token found.")
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
 }

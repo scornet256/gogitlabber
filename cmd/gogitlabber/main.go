@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -38,19 +37,4 @@ func main() {
 	// manage found repositories
 	checkoutRepositories(repositories)
 	printPullerror(pullError)
-}
-
-func printUsage() {
-	fmt.Println("Usage: gogitlabber")
-	fmt.Println("         --archived=(any|excluded|only)")
-	fmt.Println("         --destination=$HOME/Documents")
-	fmt.Println("         --gitlab-url=gitlab.example.com")
-	fmt.Println("         --gitlab-token=<supersecrettoken>")
-	fmt.Println("")
-	fmt.Println("You can also set these environment variables:")
-	fmt.Println("  GOGITLABBER_ARCHIVED=(any|excluded|only)")
-	fmt.Println("  GOGITLABBER_DESTINATION=$HOME/Documents")
-	fmt.Println("  GITLAB_API_TOKEN=<supersecrettoken>")
-	fmt.Println("  GITLAB_URL=gitlab.example.com")
-	fmt.Println("")
 }

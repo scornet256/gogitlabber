@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -15,38 +16,24 @@ func loadEnvironmentVariables() error {
 
 func manageArguments() {
 
-	// require at least the destination argument
-	if len(os.Args) <= 1 {
-		printUsage()
-		os.Exit(1)
-	}
+	var archivedFlag = flag.String("archived", "excluded", "to include archived repositories (any|excluded|exclusive)\nenv = GOGITLABBER_ARCHIVED\n")
+	var destinationFlag = flag.String("destination", "", "where to check the repositories out\nenv = GOGITLABBER_DESTINATION")
+	var tokenFlag = flag.String("gitlab-api-token", "", "gitlab api token; example glpat-xxxx\nenv = GITLAB_API_TOKEN")
+	var hostFlag = flag.String("gitlab-url", "", "gitlab host; example gitlab.example.com\nenv = GITLAB_HOSTNAME")
 
-	// parse arguments
-	for _, arg := range os.Args[1:] {
-		switch {
+	flag.Parse()
 
-		case strings.HasPrefix(arg, "--archived="):
-			includeArchived = strings.TrimPrefix(arg, "--archived=")
-
-		case strings.HasPrefix(arg, "--destination="):
-			repoDestinationPre = strings.TrimPrefix(arg, "--destination=")
-
-		case strings.HasPrefix(arg, "--gitlab-api-token="):
-			gitlabToken = strings.TrimPrefix(arg, "--gitlab-api-token=")
-
-		case strings.HasPrefix(arg, "--gitlab-url="):
-			gitlabHost = strings.TrimPrefix(arg, "--gitlab-url=")
-
-		default:
-			printUsage()
-			os.Exit(1)
-		}
-	}
+	// assign the parsed values to your variables
+	includeArchived = *archivedFlag
+	repoDestinationPre = *destinationFlag
+	gitlabToken = *tokenFlag
+	gitlabHost = *hostFlag
 
 	// fail if destination is unknown
 	if repoDestinationPre == "" {
 		fmt.Println("Fatal: No destination found.")
-		printUsage()
+		flag.PrintDefaults()
+		fmt.Println("")
 		os.Exit(1)
 	}
 
@@ -56,31 +43,39 @@ func manageArguments() {
 	}
 
 	// --archive options:
-	// - any      (fetch both)
-	// - only     (fetch archived only)
-	// - excluded (fetch non-archived only - default)
+	// - any        (fetch both)
+	// - exclusive  (fetch archived exclusive)
+	// - excluded   (fetch non-archived exclusive - default)
 	if includeArchived == "" {
 		includeArchived = "excluded"
 	}
 
 	if includeArchived != "any" &&
-		includeArchived != "only" &&
+		includeArchived != "exclusive" &&
 		includeArchived != "excluded" {
 		fmt.Println("Fatal: Wrong archive option found.")
-    printUsage()
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	// verify GitLab input
+	// use environment variable if set, otherwise use flag value
+	if envHost := os.Getenv("GITLAB_HOSTNAME"); envHost != "" {
+		gitlabHost = envHost
+	}
+
+	if envToken := os.Getenv("GITLAB_API_TOKEN"); envToken != "" {
+		gitlabToken = envToken
+	}
+
 	if gitlabHost == "" {
-		fmt.Println("Fatal: No GitLab server configured.")
-		printUsage()
+		fmt.Println("Fatal: No GitLab Host found.")
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
 	if gitlabToken == "" {
 		fmt.Println("Fatal: No GitLab API Token found.")
-		printUsage()
+		flag.PrintDefaults()
 		os.Exit(1)
 	}
 }

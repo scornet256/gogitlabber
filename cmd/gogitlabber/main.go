@@ -10,8 +10,11 @@ var includeArchived string
 var gitlabToken string
 var gitlabHost string
 
-// functional vars
-var pullError []string
+var clonedCount int
+var errorCount int
+var pulledCount int 
+var pullError int
+var pullErrorMsg []string
 
 type Repository struct {
 	Name              string `json:"name"`
@@ -31,5 +34,5 @@ func main() {
 
 	// manage found repositories
 	checkoutRepositories(repositories)
-	printPullerror(pullError)
+  printPullError(pullErrorMsg)
 }

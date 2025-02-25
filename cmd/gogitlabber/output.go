@@ -51,3 +51,11 @@ func printSummary() {
 		errorCount,
 	)
 }
+
+func printPullError(pullErrorMsg []string) {
+	if len(pullErrorMsg) > 0 {
+		for _, repo := range pullErrorMsg {
+			fmt.Printf("❕%s has unstaged changes.\n", repo)
+		}
+	}
+}

@@ -33,6 +33,8 @@ func main() {
 	}
 
 	// manage found repositories
+  progressBar(repositories)
 	checkoutRepositories(repositories)
+  printSummary()
   printPullError(pullErrorMsg)
 }

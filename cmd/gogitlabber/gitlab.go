@@ -5,11 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os/exec"
 	"strings"
-
-	"github.com/k0kubun/go-ansi"
-	"github.com/schollz/progressbar/v3"
 )
 
 func fetchRepositories() ([]Repository, error) {
@@ -60,45 +56,23 @@ func fetchRepositories() ([]Repository, error) {
 }
 
 func checkoutRepositories(repositories []Repository) {
-	repoCount := len(repositories)
-
-	// make progressbar
-	barPrefix := fmt.Sprintf("Getting your one and only repository...")
-	if repoCount > 1 {
-		barPrefix = fmt.Sprintf("Getting your repositories...")
-	}
-
-	bar := progressbar.NewOptions(
-		repoCount,
-		progressbar.OptionSetWriter(ansi.NewAnsiStdout()),
-		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionShowCount(),
-		progressbar.OptionShowDescriptionAtLineEnd(),
-		progressbar.OptionSetElapsedTime(false),
-		progressbar.OptionSetPredictTime(false),
-		progressbar.OptionSetWidth(20),
-		progressbar.OptionSetDescription(barPrefix),
-		progressbar.OptionSetTheme(progressbar.Theme{
-			Saucer:        "[green]=[reset]",
-			SaucerHead:    "[green]>[reset]",
-			SaucerPadding: " ",
-			BarStart:      "[",
-			BarEnd:        "]",
-		}),
-	)
 
 	for _, repo := range repositories {
 
+    // create clone gitlab url
 		repoName := string(repo.PathWithNamespace)
 		gitlabUrl := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git",
 			gitlabToken, gitlabHost, repoName)
 
+    // create repository destination
 		repoDestination := repoDestinationPre + repoName
 
+    // create bar description
 		descriptionPrefixPre := "Cloning repository "
 		descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 		bar.Describe(descriptionPrefix)
 
+    // clone the repo
 		cloneOutput, err := cloneRepository(repoDestination, gitlabUrl)
 
 		if err != nil {
@@ -113,81 +87,23 @@ func checkoutRepositories(repositories []Repository) {
 
 				_, err := pullRepositories(repoDestination)
 				if err != nil {
-					bar.Add(1)
 					continue
 				}
 
 				pulledCount = pulledCount + 1
-				bar.Add(1)
 				continue
 			}
 
+      // in case cloning failed and the directory does not exist
+      // print the clone error and continue
 			log.Printf("\n❌ error cloning %s: %v\n%s\n", repoName, err, cloneOutput)
 			errorCount = errorCount + 1
 			bar.Add(1)
 			continue
 		}
 
+    // finish the clone
 		clonedCount = clonedCount + 1
 		bar.Add(1)
-	}
-
-	// print empty line as the bar does not do that
-	fmt.Println("")
-
-	// print summary
-	fmt.Printf(
-		"Summary:\n"+
-			" Cloned repositories: %v\n"+
-			" Pulled repositories: %v\n"+
-			" Errors: %v\n",
-		clonedCount,
-		pulledCount,
-		errorCount,
-	)
-}
-
-func cloneRepository(repoDestination string, gitlabUrl string) (string, error) {
-
-	cloneCmd := exec.Command("git", "clone", gitlabUrl, repoDestination)
-	cloneOutput, err := cloneCmd.CombinedOutput()
-
-	return string(cloneOutput), err
-}
-
-func findRemote(repoDestination string) (string, error) {
-
-	remoteCmd := exec.Command("git", "-C", repoDestination, "remote", "show")
-	remoteOutput, err := remoteCmd.CombinedOutput()
-	remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]
-
-	if err != nil {
-		log.Printf("\n❌ error finding remote for: %s\n", err)
-	}
-
-	return remote, err
-}
-
-func pullRepositories(repoDestination string) (string, error) {
-
-	remote, err := findRemote(repoDestination)
-	pullCmd := exec.Command("git", "-C", repoDestination, "pull", remote)
-	pullOutput, err := pullCmd.CombinedOutput()
-
-	if err != nil {
-		errorCount = errorCount + 1
-		if strings.Contains(string(pullOutput), "You have unstaged changes") {
-			pullErrorMsg = append(pullErrorMsg, repoDestination)
-		}
-	}
-
-	return string(pullOutput), err
-}
-
-func printPullError(pullErrorMsg []string) {
-	if len(pullErrorMsg) > 0 {
-		for _, repo := range pullErrorMsg {
-			fmt.Printf("❕%s has unstaged changes.\n", repo)
-		}
 	}
 }

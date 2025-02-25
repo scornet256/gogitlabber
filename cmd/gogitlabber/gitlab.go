@@ -116,6 +116,7 @@ func checkoutRepositories(repositories []Repository) {
 					bar.Add(1)
 					continue
 				}
+
 				pulledCount = pulledCount + 1
 				bar.Add(1)
 				continue
@@ -135,7 +136,15 @@ func checkoutRepositories(repositories []Repository) {
 	fmt.Println("")
 
 	// print summary
-	fmt.Printf("Summary:\n Cloned repositories: %v\n Pulled repositories: %v\n Errors: %v\n", clonedCount, pulledCount, errorCount)
+	fmt.Printf(
+		"Summary:\n"+
+			" Cloned repositories: %v\n"+
+			" Pulled repositories: %v\n"+
+			" Errors: %v\n",
+		clonedCount,
+		pulledCount,
+		errorCount,
+	)
 }
 
 func cloneRepository(repoDestination string, gitlabUrl string) (string, error) {
@@ -167,7 +176,7 @@ func pullRepositories(repoDestination string) (string, error) {
 
 	if err != nil {
 		errorCount = errorCount + 1
-    if strings.Contains(string(pullOutput), "You have unstaged changes") {
+		if strings.Contains(string(pullOutput), "You have unstaged changes") {
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
 		}
 	}

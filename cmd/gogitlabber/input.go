@@ -10,10 +10,10 @@ import (
 func manageArguments() {
 
 	// configuration vars
-	var archivedFlag = flag.String("archived", "excluded", "to include archived repositories (any|excluded|exclusive)\nenv = GOGITLABBER_ARCHIVED\n")
-	var destinationFlag = flag.String("destination", "", "specify where to check the repositories out\n  example: -destination=$HOME/repos\nenv = GOGITLABBER_DESTINATION\n")
-	var hostFlag = flag.String("gitlab-url", "", "specify gitlab host\n  example: -gitlab-url=gitlab.example.com\nenv = GITLAB_URL\n")
-	var tokenFlag = flag.String("gitlab-api-token", "", "specify gitlab api token\n  example: -gitlab-api=glpat-xxxx\nenv = GITLAB_API_TOKEN\n")
+  var archivedFlag = flag.String("archived", "excluded", "To include archived repositories (any|excluded|exclusive)\n  example: -archived=any\nenv = GOGITLABBER_ARCHIVED\n")
+	var destinationFlag = flag.String("destination", "$HOME/Documents", "Specify where to check the repositories out\n  example: -destination=$HOME/repos\nenv = GOGITLABBER_DESTINATION\n")
+	var hostFlag = flag.String("gitlab-url", "gitlab.com", "Specify GitLab host\n  example: -gitlab-url=gitlab.com\nenv = GITLAB_URL\n")
+	var tokenFlag = flag.String("gitlab-api-token", "", "Specify GitLab API token\n  example: -gitlab-api=glpat-xxxx\nenv = GITLAB_API_TOKEN\n")
 
 	flag.Parse()
 

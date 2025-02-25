@@ -96,7 +96,7 @@ func checkoutRepositories(repositories []Repository) {
 		repoDestination := repoDestinationPre + repoName
 
 		descriptionPrefixPre := "Cloning repository "
-		descriptionPrefix := descriptionPrefixPre + repoName
+		descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 		bar.Describe(descriptionPrefix)
 
 		cloneOutput, err := cloneRepository(repoDestination, gitlabUrl)
@@ -108,7 +108,7 @@ func checkoutRepositories(repositories []Repository) {
 				"already exists and is not an empty directory") {
 
 				descriptionPrefixPre := "Pulling repository "
-				descriptionPrefix := descriptionPrefixPre + repoName
+				descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 				bar.Describe(descriptionPrefix)
 
 				_, err := pullRepositories(repoDestination)

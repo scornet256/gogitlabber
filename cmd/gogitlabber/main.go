@@ -29,7 +29,7 @@ func main() {
   verifyGitAvailable()
 
 	// fetch repository information from gitlab
-	repositories, err := fetchRepositories()
+	repositories, err := fetchRepositoriesGitlab()
 	if err != nil {
 		log.Fatalf("Error fetching repositories: %v", err)
 	}

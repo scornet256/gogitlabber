@@ -3,12 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
-	"strings"
 )
 
-func fetchRepositories() ([]Repository, error) {
+func fetchRepositoriesGitlab() ([]Repository, error) {
 
 	// default options
 	membership := "membership=true"
@@ -55,57 +53,13 @@ func fetchRepositories() ([]Repository, error) {
 	return repositories, nil
 }
 
-func checkoutRepositories(repositories []Repository) {
+func getGitlabURL(gitlabToken string, gitlabHost string, repoName string) (string) {
 
-	for _, repo := range repositories {
+  // make gitlab url
+  url := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git",
+    gitlabToken, 
+    gitlabHost, 
+    repoName)
 
-		// create clone gitlab url
-		repoName := string(repo.PathWithNamespace)
-    gitlabUrl := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git",
-      gitlabToken, 
-      gitlabHost, 
-      repoName)
-
-		// create repository destination
-		repoDestination := repoDestinationPre + repoName
-
-		// create and update bar description
-		descriptionPrefixPre := "Cloning repository "
-		descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-		bar.Describe(descriptionPrefix)
-
-		// clone the repo
-		cloneOutput, err := cloneRepository(repoDestination, gitlabUrl)
-
-		if err != nil {
-
-			// if repo already exists, try to pull the latest changes
-			if strings.Contains(string(cloneOutput),
-				"already exists and is not an empty directory") {
-
-				descriptionPrefixPre := "Pulling repository "
-				descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-				bar.Describe(descriptionPrefix)
-
-				_, err := pullRepositories(repoDestination)
-				if err != nil {
-					continue
-				}
-
-				pulledCount = pulledCount + 1
-				continue
-			}
-
-			// in case cloning failed and the directory does not exist
-			// print the clone error and continue
-			log.Printf("\n❌ error cloning %s: %v\n%s\n", repoName, err, cloneOutput)
-			errorCount = errorCount + 1
-			bar.Add(1)
-			continue
-		}
-
-		// finish the clone
-		clonedCount = clonedCount + 1
-		bar.Add(1)
-	}
+  return url
 }

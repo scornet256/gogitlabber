@@ -59,20 +59,20 @@ func checkoutRepositories(repositories []Repository) {
 
 	for _, repo := range repositories {
 
-    // create clone gitlab url
+		// create clone gitlab url
 		repoName := string(repo.PathWithNamespace)
 		gitlabUrl := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git",
 			gitlabToken, gitlabHost, repoName)
 
-    // create repository destination
+		// create repository destination
 		repoDestination := repoDestinationPre + repoName
 
-    // create bar description
+		// create bar description
 		descriptionPrefixPre := "Cloning repository "
 		descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 		bar.Describe(descriptionPrefix)
 
-    // clone the repo
+		// clone the repo
 		cloneOutput, err := cloneRepository(repoDestination, gitlabUrl)
 
 		if err != nil {
@@ -94,15 +94,15 @@ func checkoutRepositories(repositories []Repository) {
 				continue
 			}
 
-      // in case cloning failed and the directory does not exist
-      // print the clone error and continue
+			// in case cloning failed and the directory does not exist
+			// print the clone error and continue
 			log.Printf("\n❌ error cloning %s: %v\n%s\n", repoName, err, cloneOutput)
 			errorCount = errorCount + 1
 			bar.Add(1)
 			continue
 		}
 
-    // finish the clone
+		// finish the clone
 		clonedCount = clonedCount + 1
 		bar.Add(1)
 	}

@@ -9,9 +9,9 @@ import (
 
 func manageArguments() {
 
-  // configuration vars
-  var archivedFlag = flag.String("archived", "excluded", "to include archived repositories (any|excluded|exclusive)\nenv = GOGITLABBER_ARCHIVED\n")
-  var destinationFlag = flag.String("destination", "", "specify where to check the repositories out\n  example: -destination=$HOME/repos\nenv = GOGITLABBER_DESTINATION\n")
+	// configuration vars
+	var archivedFlag = flag.String("archived", "excluded", "to include archived repositories (any|excluded|exclusive)\nenv = GOGITLABBER_ARCHIVED\n")
+	var destinationFlag = flag.String("destination", "", "specify where to check the repositories out\n  example: -destination=$HOME/repos\nenv = GOGITLABBER_DESTINATION\n")
 	var hostFlag = flag.String("gitlab-url", "", "specify gitlab host\n  example: -gitlab-url=gitlab.example.com\nenv = GITLAB_URL\n")
 	var tokenFlag = flag.String("gitlab-api-token", "", "specify gitlab api token\n  example: -gitlab-api=glpat-xxxx\nenv = GITLAB_API_TOKEN\n")
 
@@ -32,15 +32,15 @@ func manageArguments() {
 		gitlabToken = envToken
 	}
 
-  if envRepoDest := os.Getenv("GOGITLABBER_DESTINATION"); envRepoDest != "" {
-    repoDestinationPre = envRepoDest
-  }
+	if envRepoDest := os.Getenv("GOGITLABBER_DESTINATION"); envRepoDest != "" {
+		repoDestinationPre = envRepoDest
+	}
 
-  if envArchived := os.Getenv("GOGITLABBER_ARCHIVED"); envArchived != "" {
-    includeArchived = envArchived
-  }
+	if envArchived := os.Getenv("GOGITLABBER_ARCHIVED"); envArchived != "" {
+		includeArchived = envArchived
+	}
 
-  // fail if no configuration found
+	// fail if no configuration found
 	if gitlabHost == "" {
 		fmt.Println("Fatal: No GitLab Host found.")
 		flag.PrintDefaults()

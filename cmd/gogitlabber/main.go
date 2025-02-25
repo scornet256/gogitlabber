@@ -12,7 +12,7 @@ var gitlabHost string
 
 var clonedCount int
 var errorCount int
-var pulledCount int 
+var pulledCount int
 var pullError int
 var pullErrorMsg []string
 
@@ -33,8 +33,8 @@ func main() {
 	}
 
 	// manage found repositories
-  progressBar(repositories)
+	progressBar(repositories)
 	checkoutRepositories(repositories)
-  printSummary()
-  printPullError(pullErrorMsg)
+	printSummary()
+	printPullError(pullErrorMsg)
 }

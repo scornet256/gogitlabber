@@ -1,6 +1,6 @@
 module gogitlabber
 
-go 1.23.1
+go 1.24.0
 
 require (
 	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213 // indirect

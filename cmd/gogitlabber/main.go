@@ -13,7 +13,6 @@ var gitlabHost string
 var clonedCount int
 var errorCount int
 var pulledCount int
-var pullError int
 var pullErrorMsg []string
 
 type Repository struct {
@@ -25,6 +24,9 @@ func main() {
 
 	// manage all argument magic
 	manageArguments()
+
+  // check for git
+  verifyGitAvailable()
 
 	// fetch repository information from gitlab
 	repositories, err := fetchRepositories()

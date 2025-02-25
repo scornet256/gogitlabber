@@ -61,13 +61,15 @@ func checkoutRepositories(repositories []Repository) {
 
 		// create clone gitlab url
 		repoName := string(repo.PathWithNamespace)
-		gitlabUrl := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git",
-			gitlabToken, gitlabHost, repoName)
+    gitlabUrl := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git",
+      gitlabToken, 
+      gitlabHost, 
+      repoName)
 
 		// create repository destination
 		repoDestination := repoDestinationPre + repoName
 
-		// create bar description
+		// create and update bar description
 		descriptionPrefixPre := "Cloning repository "
 		descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 		bar.Describe(descriptionPrefix)

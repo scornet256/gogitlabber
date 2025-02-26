@@ -1,18 +1,18 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os/exec"
 	"strings"
 )
 
 func checkoutRepositories(repositories []Repository) {
-
 	for _, repo := range repositories {
 
 		// create clone
 		repoName := string(repo.PathWithNamespace)
-    url := getGitlabURL(gitlabToken, gitlabHost, repoName)
+		url := getGitlabURL(gitlabToken, gitlabHost, repoName)
 
 		// create repository destination
 		repoDestination := repoDestinationPre + repoName
@@ -35,18 +35,14 @@ func checkoutRepositories(repositories []Repository) {
 				descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 				bar.Describe(descriptionPrefix)
 
-				_, err := pullRepositories(repoDestination)
-				if err != nil {
-					continue
-				}
-
+				pullRepositories(repoDestination)
 				pulledCount = pulledCount + 1
 				continue
 			}
 
 			// in case cloning failed and the directory does not exist
 			// print the clone error and continue
-			log.Printf("\n❌ error cloning %s: %v\n%s\n", repoName, err, cloneOutput)
+			log.Printf("failed to clone %s: %v", repoName, err)
 			errorCount = errorCount + 1
 			bar.Add(1)
 			continue
@@ -59,7 +55,6 @@ func checkoutRepositories(repositories []Repository) {
 }
 
 func cloneRepository(repoDestination string, gitlabUrl string) (string, error) {
-
 	cloneCmd := exec.Command("git", "clone", gitlabUrl, repoDestination)
 	cloneOutput, err := cloneCmd.CombinedOutput()
 
@@ -67,20 +62,17 @@ func cloneRepository(repoDestination string, gitlabUrl string) (string, error) {
 }
 
 func findRemote(repoDestination string) (string, error) {
-
 	remoteCmd := exec.Command("git", "-C", repoDestination, "remote", "show")
 	remoteOutput, err := remoteCmd.CombinedOutput()
-	remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]
-
 	if err != nil {
-		log.Printf("\n❌ error finding remote for: %s\n", err)
+		return "", fmt.Errorf("finding remote: %v", err)
 	}
 
-	return remote, err
+	remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]
+	return remote, nil
 }
 
 func pullRepositories(repoDestination string) (string, error) {
-
 	remote, err := findRemote(repoDestination)
 	pullCmd := exec.Command("git", "-C", repoDestination, "pull", remote)
 	pullOutput, err := pullCmd.CombinedOutput()

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-  "os"
 )
 
 func fetchRepositoriesGitlab() ([]Repository, error) {

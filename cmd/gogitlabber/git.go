@@ -38,11 +38,7 @@ func checkoutRepositories(repositories []Repository) {
 			if strings.Contains(string(cloneOutput),
 				"already exists and is not an empty directory") {
 
-				descriptionPrefixPre := "Pulling repository "
-				descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-				bar.Describe(descriptionPrefix)
-
-				pullRepository(repoDestination)
+				pullRepository(repoName, repoDestination)
 				pulledCount = pulledCount + 1
 				continue
 			}
@@ -61,7 +57,13 @@ func checkoutRepositories(repositories []Repository) {
 	}
 }
 
-func pullRepository(repoDestination string) (string, error) {
+func pullRepository(repoName string, repoDestination string) {
+
+  // update the progress bar
+  descriptionPrefixPre := "Pulling repository "
+  descriptionPrefix := descriptionPrefixPre + repoName + " ..."
+  bar.Describe(descriptionPrefix)
+
 
   // find remote
   findRemote := func(repoDestination string) (string, error) {
@@ -76,6 +78,7 @@ func pullRepository(repoDestination string) (string, error) {
   }
 	remote, _ := findRemote(repoDestination)
 
+
   // pull repository
 	pullCmd := exec.Command("git", "-C", repoDestination, "pull", remote)
 	pullOutput, err := pullCmd.CombinedOutput()
@@ -84,9 +87,12 @@ func pullRepository(repoDestination string) (string, error) {
 		errorCount = errorCount + 1
 		if strings.Contains(string(pullOutput), "You have unstaged changes") {
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
-		}
+		} else {
+      log.Printf("pull error: %v", err)
+    }
 	}
+  
 
+  // update the progress bar
 	bar.Add(1)
-	return string(pullOutput), err
 }

@@ -25,8 +25,8 @@ func main() {
 	// manage all argument magic
 	manageArguments()
 
-  // check for git
-  verifyGitAvailable()
+	// check for git
+	verifyGitAvailable()
 
 	// fetch repository information from gitlab
 	repositories, err := fetchRepositoriesGitlab()

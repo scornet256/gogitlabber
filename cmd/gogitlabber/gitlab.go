@@ -56,14 +56,3 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 
 	return repositories, nil
 }
-
-func getGitlabURL(gitlabToken string, gitlabHost string, repoName string) (string) {
-
-  // make gitlab url
-  url := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git",
-    gitlabToken, 
-    gitlabHost, 
-    repoName)
-
-  return url
-}

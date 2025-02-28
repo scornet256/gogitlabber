@@ -10,9 +10,8 @@ import (
 func checkoutRepositories(repositories []Repository) {
 	for _, repo := range repositories {
 
-		// create clone
+		// get repository name
 		repoName := string(repo.PathWithNamespace)
-		url := getGitlabURL(gitlabToken, gitlabHost, repoName)
 
 		// create repository destination
 		repoDestination := repoDestinationPre + repoName
@@ -23,15 +22,18 @@ func checkoutRepositories(repositories []Repository) {
 		bar.Describe(descriptionPrefix)
 
 		// clone the repo
-    cloneRepository := func(repoDestination string, gitlabUrl string) (string, error) {
-      cloneCmd := exec.Command("git", "clone", gitlabUrl, repoDestination)
-      cloneOutput, err := cloneCmd.CombinedOutput()
+		cloneRepository := func(repoDestination string, url string) (string, error) {
+			cloneCmd := exec.Command("git", "clone", url, repoDestination)
+			cloneOutput, err := cloneCmd.CombinedOutput()
 
-      return string(cloneOutput), err
-    }
+			return string(cloneOutput), err
+		}
+
+		// make gitlab url
+		url := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git", gitlabToken, gitlabHost, repoName)
 		cloneOutput, err := cloneRepository(repoDestination, url)
 
-    // try to pull if clone didnt work 
+		// try to pull if clone didnt work
 		if err != nil {
 
 			// if repo already exists, try to pull the latest changes
@@ -59,27 +61,25 @@ func checkoutRepositories(repositories []Repository) {
 
 func pullRepository(repoName string, repoDestination string) {
 
-  // update the progress bar
-  descriptionPrefixPre := "Pulling repository "
-  descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-  bar.Describe(descriptionPrefix)
+	// update the progress bar
+	descriptionPrefixPre := "Pulling repository "
+	descriptionPrefix := descriptionPrefixPre + repoName + " ..."
+	bar.Describe(descriptionPrefix)
 
+	// find remote
+	findRemote := func(repoDestination string) (string, error) {
+		remoteCmd := exec.Command("git", "-C", repoDestination, "remote", "show")
+		remoteOutput, err := remoteCmd.CombinedOutput()
+		if err != nil {
+			return "", fmt.Errorf("finding remote: %v", err)
+		}
 
-  // find remote
-  findRemote := func(repoDestination string) (string, error) {
-    remoteCmd := exec.Command("git", "-C", repoDestination, "remote", "show")
-    remoteOutput, err := remoteCmd.CombinedOutput()
-    if err != nil {
-      return "", fmt.Errorf("finding remote: %v", err)
-    }
-
-    remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]
-    return remote, nil
-  }
+		remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]
+		return remote, nil
+	}
 	remote, _ := findRemote(repoDestination)
 
-
-  // pull repository
+	// pull repository
 	pullCmd := exec.Command("git", "-C", repoDestination, "pull", remote)
 	pullOutput, err := pullCmd.CombinedOutput()
 
@@ -88,11 +88,10 @@ func pullRepository(repoName string, repoDestination string) {
 		if strings.Contains(string(pullOutput), "You have unstaged changes") {
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
 		} else {
-      log.Printf("pull error: %v", err)
-    }
+			log.Printf("pull error: %v", err)
+		}
 	}
-  
 
-  // update the progress bar
+	// update the progress bar
 	bar.Add(1)
 }

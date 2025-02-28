@@ -1,7 +1,7 @@
 package main
 
 import (
-  "log"
+	"log"
 	"os"
 	"os/exec"
 )
@@ -9,7 +9,7 @@ import (
 func verifyGitAvailable() {
 	_, err := exec.LookPath("git")
 	if err != nil {
-    log.Fatalf("Error: could not find git in path")
+		log.Fatalf("Error: could not find git in path")
 		os.Exit(1)
 	}
 }

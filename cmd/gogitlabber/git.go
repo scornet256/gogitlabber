@@ -23,8 +23,15 @@ func checkoutRepositories(repositories []Repository) {
 		bar.Describe(descriptionPrefix)
 
 		// clone the repo
+    cloneRepository := func(repoDestination string, gitlabUrl string) (string, error) {
+      cloneCmd := exec.Command("git", "clone", gitlabUrl, repoDestination)
+      cloneOutput, err := cloneCmd.CombinedOutput()
+
+      return string(cloneOutput), err
+    }
 		cloneOutput, err := cloneRepository(repoDestination, url)
 
+    // try to pull if clone didnt work 
 		if err != nil {
 
 			// if repo already exists, try to pull the latest changes
@@ -35,7 +42,7 @@ func checkoutRepositories(repositories []Repository) {
 				descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 				bar.Describe(descriptionPrefix)
 
-				pullRepositories(repoDestination)
+				pullRepository(repoDestination)
 				pulledCount = pulledCount + 1
 				continue
 			}
@@ -54,26 +61,22 @@ func checkoutRepositories(repositories []Repository) {
 	}
 }
 
-func cloneRepository(repoDestination string, gitlabUrl string) (string, error) {
-	cloneCmd := exec.Command("git", "clone", gitlabUrl, repoDestination)
-	cloneOutput, err := cloneCmd.CombinedOutput()
+func pullRepository(repoDestination string) (string, error) {
 
-	return string(cloneOutput), err
-}
+  // find remote
+  findRemote := func(repoDestination string) (string, error) {
+    remoteCmd := exec.Command("git", "-C", repoDestination, "remote", "show")
+    remoteOutput, err := remoteCmd.CombinedOutput()
+    if err != nil {
+      return "", fmt.Errorf("finding remote: %v", err)
+    }
 
-func findRemote(repoDestination string) (string, error) {
-	remoteCmd := exec.Command("git", "-C", repoDestination, "remote", "show")
-	remoteOutput, err := remoteCmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("finding remote: %v", err)
-	}
+    remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]
+    return remote, nil
+  }
+	remote, _ := findRemote(repoDestination)
 
-	remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]
-	return remote, nil
-}
-
-func pullRepositories(repoDestination string) (string, error) {
-	remote, err := findRemote(repoDestination)
+  // pull repository
 	pullCmd := exec.Command("git", "-C", repoDestination, "pull", remote)
 	pullOutput, err := pullCmd.CombinedOutput()
 

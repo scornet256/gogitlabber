@@ -3,13 +3,13 @@ stages:
   - "linter"
   - "build"
 
-go-linter:
+linter:
   stage: "linter"
   image: "golangci/golangci-lint:latest-alpine"
   script:
     - "golangci-lint run"
 
-go-build:
+build:
   stage: "build"
   needs:
     - "linter"

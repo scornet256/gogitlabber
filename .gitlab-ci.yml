@@ -9,10 +9,18 @@ linter:
   script:
     - "golangci-lint run"
 
+testing:
+  stage: "testing"
+  needs:
+    - "linter"
+  image: "cr.simoncor.net/siempie/go-build:latest"
+  script:
+    - "go test cmd/gogitlabber/*"
+
 build:
   stage: "build"
   needs:
-    - "linter"
+    - "testing"
   image: "cr.simoncor.net/siempie/go-build:latest"
   script:
     - "GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o gogitlabber cmd/gogitlabber/*"

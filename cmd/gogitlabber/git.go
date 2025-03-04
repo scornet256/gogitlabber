@@ -49,18 +49,19 @@ func checkoutRepositories(repositories []Repository) {
 				log.Printf("error: %v", err)
 			}
 			clonedCount = clonedCount + 1
-			bar.Add(1)
+			progressBarAdd(1)
 
 			// pull the latest
 		} else if strings.Contains(string(repoStatus), url) {
 			pullRepository(repoName, repoDestination)
-			bar.Add(1)
+			progressBarAdd(1)
 
 			// report error if not cloned or pulled repository
 		} else {
 			log.Printf("error: decided not to clone or pull repository %v\n", repoName)
 			log.Printf("error: this is why: %v\n", repoStatus)
 			errorCount = errorCount + 1
+			progressBarAdd(1)
 		}
 	}
 }

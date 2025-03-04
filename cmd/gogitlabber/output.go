@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/k0kubun/go-ansi"
 	"github.com/schollz/progressbar/v3"
@@ -13,9 +14,9 @@ func progressBar(repositories []Repository) {
 	repoCount := len(repositories)
 
 	// make progressbar
-	barPrefix := fmt.Sprintf("Getting your one and only repository...")
+	barPrefix := "Getting your one and only repository..."
 	if repoCount > 1 {
-		barPrefix = fmt.Sprintf("Getting your repositories...")
+		barPrefix = "Getting your repositories..."
 	}
 
 	bar = progressbar.NewOptions(
@@ -36,6 +37,12 @@ func progressBar(repositories []Repository) {
 			BarEnd:        "]",
 		}),
 	)
+}
+
+func progressBarAdd(amount int) {
+	if err := bar.Add(amount); err != nil {
+		log.Printf("Progress bar update error: %v", err)
+	}
 }
 
 func printSummary() {

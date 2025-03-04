@@ -10,6 +10,7 @@ var includeArchived string
 var gitlabToken string
 var gitlabHost string
 
+// count 🧛
 var clonedCount int
 var errorCount int
 var pulledCount int

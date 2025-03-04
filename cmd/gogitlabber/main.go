@@ -31,7 +31,7 @@ func main() {
 	// fetch repository information from gitlab
 	repositories, err := fetchRepositoriesGitlab()
   if err != nil {
-     log.Fatalf("fatal: %v", err)
+     log.Fatalf("FATAL: %v", err)
   }
 
 	// manage found repositories

@@ -45,7 +45,7 @@ func checkoutRepositories(repositories []Repository) {
 			}
 			_, err := cloneRepository(repoDestination, url)
 			if err != nil {
-				log.Printf("error: %v\n", err)
+				log.Printf("ERROR: %v\n", err)
 			}
 			clonedCount = clonedCount + 1
 			progressBarAdd(1)
@@ -56,8 +56,8 @@ func checkoutRepositories(repositories []Repository) {
 			progressBarAdd(1)
 
 		default:
-			log.Printf("error: decided not to clone or pull repository %v\n", repoName)
-			log.Printf("error: this is why: %v\n", repoStatus)
+			log.Printf("ERROR: decided not to clone or pull repository %v\n", repoName)
+			log.Printf("ERROR: this is why: %v\n", repoStatus)
 			errorCount = errorCount + 1
 			progressBarAdd(1)
 		}
@@ -98,7 +98,7 @@ func pullRepository(repoName string, repoDestination string) {
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
 
 		default:
-			log.Printf("error: pulling %v\n", err)
+			log.Printf("ERROR: pulling %v\n", err)
 		}
 	}
 }

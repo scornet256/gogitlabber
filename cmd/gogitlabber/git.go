@@ -16,46 +16,52 @@ func checkoutRepositories(repositories []Repository) {
 		// create repository destination
 		repoDestination := repoDestinationPre + repoName
 
-		// create and update bar description
-		descriptionPrefixPre := "Cloning repository "
-		descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-		bar.Describe(descriptionPrefix)
-
-		// clone the repo
-		cloneRepository := func(repoDestination string, url string) (string, error) {
-			cloneCmd := exec.Command("git", "clone", url, repoDestination)
-			cloneOutput, err := cloneCmd.CombinedOutput()
-
-			return string(cloneOutput), err
-		}
-
 		// make gitlab url
 		url := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git", gitlabToken, gitlabHost, repoName)
-		cloneOutput, err := cloneRepository(repoDestination, url)
 
-		// try to pull if clone didnt work
-		if err != nil {
+		// check current status of repoDestination
+		checkRepo := func(repoDestination string) string {
+			checkCmd := exec.Command("git", "-C", repoDestination, "remote", "-v")
+			checkOutput, _ := checkCmd.CombinedOutput()
 
-			// if repo already exists, try to pull the latest changes
-			if strings.Contains(string(cloneOutput),
-				"already exists and is not an empty directory") {
-
-				pullRepository(repoName, repoDestination)
-				pulledCount = pulledCount + 1
-				continue
-			}
-
-			// in case cloning failed and the directory does not exist
-			// print the clone error and continue
-			log.Printf("failed to clone %s: %v", repoName, err)
-			errorCount = errorCount + 1
-			bar.Add(1)
-			continue
+			return string(checkOutput)
 		}
+		repoStatus := checkRepo(repoDestination)
 
-		// finish the clone
-		clonedCount = clonedCount + 1
-		bar.Add(1)
+		// clone repository if it does not exist
+		if strings.Contains(string(repoStatus),
+			"No such file or directory") {
+
+			// create and update bar description
+			descriptionPrefixPre := "Cloning repository "
+			descriptionPrefix := descriptionPrefixPre + repoName + " ..."
+			bar.Describe(descriptionPrefix)
+
+			// clone the repo
+			cloneRepository := func(repoDestination string, url string) (string, error) {
+				cloneCmd := exec.Command("git", "clone", url, repoDestination)
+				cloneOutput, err := cloneCmd.CombinedOutput()
+
+				return string(cloneOutput), err
+			}
+			_, err := cloneRepository(repoDestination, url)
+			if err != nil {
+				log.Printf("error: %v", err)
+			}
+			clonedCount = clonedCount + 1
+			bar.Add(1)
+
+			// pull the latest
+		} else if strings.Contains(string(repoStatus), url) {
+			pullRepository(repoName, repoDestination)
+			bar.Add(1)
+
+			// report error if not cloned or pulled repository
+		} else {
+			log.Printf("error: decided not to clone or pull repository %v\n", repoName)
+			log.Printf("error: this is why: %v\n", repoStatus)
+			errorCount = errorCount + 1
+		}
 	}
 }
 
@@ -82,16 +88,15 @@ func pullRepository(repoName string, repoDestination string) {
 	// pull repository
 	pullCmd := exec.Command("git", "-C", repoDestination, "pull", remote)
 	pullOutput, err := pullCmd.CombinedOutput()
+	pulledCount = pulledCount + 1
 
 	if err != nil {
 		errorCount = errorCount + 1
+		pulledCount = pulledCount - 1
 		if strings.Contains(string(pullOutput), "You have unstaged changes") {
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
 		} else {
 			log.Printf("pull error: %v", err)
 		}
 	}
-
-	// update the progress bar
-	bar.Add(1)
 }

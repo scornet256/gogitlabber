@@ -5,63 +5,85 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"sync"
 )
 
-func checkoutRepositories(repositories []Repository) {
+var mu sync.Mutex
+func checkoutRepositories(repositories []Repository, concurrency int) {
+
+  var wg sync.WaitGroup
+  semaphore := make(chan struct{}, concurrency)
+
 	for _, repo := range repositories {
 
-		// get repository name + create repo destination
-		repoName := string(repo.PathWithNamespace)
-		repoDestination := repoDestinationPre + repoName
+    wg.Add(1)
+    semaphore <- struct{}{}
 
-		// make gitlab url
-		url := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git", gitlabToken, gitlabHost, repoName)
+    go func(repo Repository) {
 
-		// check current status of repoDestination
-		checkRepo := func(repoDestination string) string {
-			checkCmd := exec.Command("git", "-C", repoDestination, "remote", "-v")
-			checkOutput, _ := checkCmd.CombinedOutput()
+      defer func() {
+        <-semaphore
+        wg.Done()
+      }()
 
-			return string(checkOutput)
-		}
-		repoStatus := checkRepo(repoDestination)
+      // get repository name + create repo destination
+      repoName := string(repo.PathWithNamespace)
+      repoDestination := repoDestinationPre + repoName
 
-		// report error if not cloned or pulled repository
-		// clone repository if it does not exist
-		switch {
-		case strings.Contains(string(repoStatus), "No such file or directory"):
+      // make gitlab url
+      url := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git", gitlabToken, gitlabHost, repoName)
 
-			// update the progress bar
-			descriptionPrefixPre := "Cloning repository "
-			descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-			bar.Describe(descriptionPrefix)
+      // check current status of repoDestination
+      checkRepo := func(repoDestination string) string {
+        checkCmd := exec.Command("git", "-C", repoDestination, "remote", "-v")
+        checkOutput, _ := checkCmd.CombinedOutput()
 
-			// clone the repo
-			cloneRepository := func(repoDestination string, url string) (string, error) {
-				cloneCmd := exec.Command("git", "clone", url, repoDestination)
-				cloneOutput, err := cloneCmd.CombinedOutput()
+        return string(checkOutput)
+      }
+      repoStatus := checkRepo(repoDestination)
 
-				return string(cloneOutput), err
-			}
-			_, err := cloneRepository(repoDestination, url)
-			if err != nil {
-				log.Printf("ERROR: %v\n", err)
-			}
-			clonedCount = clonedCount + 1
-			progressBarAdd(1)
+      // report error if not cloned or pulled repository
+      // clone repository if it does not exist
+      switch {
+      case strings.Contains(string(repoStatus), "No such file or directory"):
 
-		// pull the latest
-		case strings.Contains(string(repoStatus), url):
-			pullRepository(repoName, repoDestination)
-			progressBarAdd(1)
+        // update the progress bar
+        descriptionPrefixPre := "Cloning repository "
+        descriptionPrefix := descriptionPrefixPre + repoName + " ..."
+        bar.Describe(descriptionPrefix)
 
-		default:
-			log.Printf("ERROR: decided not to clone or pull repository %v\n", repoName)
-			log.Printf("ERROR: this is why: %v\n", repoStatus)
-			errorCount = errorCount + 1
-			progressBarAdd(1)
-		}
-	}
+        // clone the repo
+        cloneRepository := func(repoDestination string, url string) (string, error) {
+          cloneCmd := exec.Command("git", "clone", url, repoDestination)
+          cloneOutput, err := cloneCmd.CombinedOutput()
+
+          return string(cloneOutput), err
+        }
+        _, err := cloneRepository(repoDestination, url)
+        if err != nil {
+          log.Printf("ERROR: %v\n", err)
+        }
+        mu.Lock()
+        clonedCount++
+        mu.Unlock()
+        progressBarAdd(1)
+
+      // pull the latest
+      case strings.Contains(string(repoStatus), url):
+        pullRepository(repoName, repoDestination)
+        progressBarAdd(1)
+
+      default:
+        log.Printf("ERROR: decided not to clone or pull repository %v\n", repoName)
+        log.Printf("ERROR: this is why: %v\n", repoStatus)
+        mu.Lock()
+        errorCount++
+        mu.Unlock()
+        progressBarAdd(1)
+      }
+    }(repo)
+  }
+  wg.Wait()
 }
 
 func pullRepository(repoName string, repoDestination string) {

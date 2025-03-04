@@ -3,10 +3,11 @@ package main
 import "log"
 
 // userdata
-var repoDestinationPre string
-var includeArchived string
-var gitlabToken string
+var concurrency int
 var gitlabHost string
+var gitlabToken string
+var includeArchived string
+var repoDestinationPre string
 
 // keep count 🧛
 var clonedCount int
@@ -36,7 +37,7 @@ func main() {
 
 	// manage found repositories
 	progressBar(repositories)
-	checkoutRepositories(repositories)
+	checkoutRepositories(repositories, concurrency)
 	printSummary()
 	printPullError(pullErrorMsg)
 }

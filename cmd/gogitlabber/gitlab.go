@@ -3,11 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 )
 
-func fetchRepositoriesGitlab() []Repository {
+func fetchRepositoriesGitlab() ([]Repository, error) {
 
 	// default options
 	membership := "membership=true"
@@ -30,7 +29,7 @@ func fetchRepositoriesGitlab() []Repository {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Fatalf("fatal: creating request: %v\n", err)
+		return nil, fmt.Errorf("creating request: %v", err)
 	}
 
 	req.Header.Set("PRIVATE-TOKEN", gitlabToken)
@@ -38,22 +37,22 @@ func fetchRepositoriesGitlab() []Repository {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("fatal: making request: %v\n", err)
+		return nil, fmt.Errorf("making request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("fatal: api request failed with status: %d\n", resp.StatusCode)
+		return nil, fmt.Errorf("API request failed with status: %d", resp.StatusCode)
 	}
 
 	var repositories []Repository
 	if err := json.NewDecoder(resp.Body).Decode(&repositories); err != nil {
-		log.Fatalf("fatal: decoding response: %v\n", err)
+		return nil, fmt.Errorf("decoding response: %v", err)
 	}
 
 	if len(repositories) < 1 {
-		log.Println("warning: no repositories found")
+		return repositories, fmt.Errorf("no repositories found")
 	}
 
-	return repositories
+	return repositories, nil
 }

@@ -1,5 +1,7 @@
 package main
 
+import "log"
+
 // userdata
 var repoDestinationPre string
 var includeArchived string
@@ -27,7 +29,10 @@ func main() {
 	verifyGitAvailable()
 
 	// fetch repository information from gitlab
-	repositories := fetchRepositoriesGitlab()
+	repositories, err := fetchRepositoriesGitlab()
+  if err != nil {
+     log.Fatalf("fatal: %v", err)
+  }
 
 	// manage found repositories
 	progressBar(repositories)

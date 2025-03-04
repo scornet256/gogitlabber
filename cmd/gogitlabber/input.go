@@ -28,7 +28,7 @@ func manageArguments() {
 	case envToken != "":
 		gitlabToken = envToken
 	default:
-		fmt.Println("Fatal: No GitLab API Token found.")
+		fmt.Println("fatal: No GitLab API Token found.")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -38,7 +38,7 @@ func manageArguments() {
 	case envHost != "":
 		gitlabHost = envHost
 	default:
-		fmt.Println("Fatal: No GitLab Host found.")
+		fmt.Println("fatal: No GitLab Host found.")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -48,7 +48,7 @@ func manageArguments() {
 	case envRepoDest != "":
 		repoDestinationPre = envRepoDest
 	default:
-		fmt.Println("Fatal: No destination found.")
+		fmt.Println("fatal: No destination found.")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -74,7 +74,7 @@ func manageArguments() {
 		includeArchived = envArchived
 
   default:
-		fmt.Println("Fatal: Wrong archive option found.")
+		fmt.Println("fatal: Wrong archive option found.")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}

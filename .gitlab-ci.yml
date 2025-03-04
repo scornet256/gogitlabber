@@ -1,6 +1,7 @@
 image: "golang:alpine"
 stages:
   - "linter"
+  - "testing"
   - "build"
 
 linter:

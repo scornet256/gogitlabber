@@ -1,21 +1,18 @@
 package main
 
-import (
-	"log"
-)
-
 // userdata
 var repoDestinationPre string
 var includeArchived string
 var gitlabToken string
 var gitlabHost string
 
-// count 🧛
+// keep count 🧛
 var clonedCount int
 var errorCount int
 var pulledCount int
 var pullErrorMsg []string
 
+// repository data
 type Repository struct {
 	Name              string `json:"name"`
 	PathWithNamespace string `json:"path_with_namespace"`
@@ -30,10 +27,7 @@ func main() {
 	verifyGitAvailable()
 
 	// fetch repository information from gitlab
-	repositories, err := fetchRepositoriesGitlab()
-	if err != nil {
-		log.Fatalf("Error fetching repositories: %v", err)
-	}
+	repositories := fetchRepositoriesGitlab()
 
 	// manage found repositories
 	progressBar(repositories)

@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func fetchRepositoriesGitlab() ([]Repository, error) {
+func fetchRepositoriesGitlab() ([]Repository) {
 
 	// default options
 	membership := "membership=true"
@@ -29,7 +29,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("creating request: %v", err)
+		fmt.Errorf("creating request: %v", err)
 	}
 
 	req.Header.Set("PRIVATE-TOKEN", gitlabToken)
@@ -37,22 +37,22 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("making request: %v", err)
+		fmt.Errorf("making request: %v", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API request failed with status: %d", resp.StatusCode)
+		fmt.Errorf("API request failed with status: %d", resp.StatusCode)
 	}
 
 	var repositories []Repository
 	if err := json.NewDecoder(resp.Body).Decode(&repositories); err != nil {
-		return nil, fmt.Errorf("decoding response: %v", err)
+		fmt.Errorf("decoding response: %v", err)
 	}
 
 	if len(repositories) < 1 {
-		return nil, fmt.Errorf("no repositories found")
+		fmt.Errorf("no repositories found")
 	}
 
-	return repositories, nil
+	return repositories
 }

@@ -29,7 +29,7 @@ func manageArguments() {
 		gitlabToken = envToken
 	default:
 		flag.Usage()
-		log.Printf("no gitlab api token found")
+    log.Printf("fatal: config; gitlab api token not found")
 	}
 
 	// manage gitlab url option
@@ -38,7 +38,7 @@ func manageArguments() {
 		gitlabHost = envHost
 	default:
 		flag.Usage()
-		log.Fatalf("no gitlab host found")
+    log.Fatalf("fatal: config; gitlab host not found")
 	}
 
 	// manage destination option
@@ -47,7 +47,7 @@ func manageArguments() {
 		repoDestinationPre = envRepoDest
 	default:
 		flag.Usage()
-		log.Fatalf("no destination found")
+    log.Fatalf("fatal: config; destination not found")
 	}
 
 	// add slash 🎩🎸 if not provided
@@ -72,6 +72,6 @@ func manageArguments() {
 
 	default:
 		flag.Usage()
-		log.Fatalf("wrong archive option found")
+    log.Fatalf("fatal: config; no or wrong archive option found")
 	}
 }

@@ -76,7 +76,7 @@ func pullRepository(repoName string, repoDestination string) {
 		remoteCmd := exec.Command("git", "-C", repoDestination, "remote", "show")
 		remoteOutput, err := remoteCmd.CombinedOutput()
 		if err != nil {
-			return "", fmt.Errorf("finding remote: %v", err)
+			return "", fmt.Errorf("finding remote: %v\n", err)
 		}
 
 		remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]

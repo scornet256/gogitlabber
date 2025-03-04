@@ -41,7 +41,7 @@ func progressBar(repositories []Repository) {
 
 func progressBarAdd(amount int) {
 	if err := bar.Add(amount); err != nil {
-		log.Printf("Progress bar update error: %v", err)
+		log.Printf("Progress bar update error: %v\n", err)
 	}
 }
 

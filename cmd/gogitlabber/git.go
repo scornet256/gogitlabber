@@ -28,11 +28,12 @@ func checkoutRepositories(repositories []Repository) {
 		}
 		repoStatus := checkRepo(repoDestination)
 
+		// report error if not cloned or pulled repository
 		// clone repository if it does not exist
-		if strings.Contains(string(repoStatus),
-			"No such file or directory") {
+		switch {
+		case strings.Contains(string(repoStatus), "No such file or directory"):
 
-			// create and update bar description
+      // update the progress bar
 			descriptionPrefixPre := "Cloning repository "
 			descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 			bar.Describe(descriptionPrefix)
@@ -51,13 +52,12 @@ func checkoutRepositories(repositories []Repository) {
 			clonedCount = clonedCount + 1
 			progressBarAdd(1)
 
-			// pull the latest
-		} else if strings.Contains(string(repoStatus), url) {
+		// pull the latest
+		case strings.Contains(string(repoStatus), url):
 			pullRepository(repoName, repoDestination)
 			progressBarAdd(1)
 
-			// report error if not cloned or pulled repository
-		} else {
+		default:
 			log.Printf("error: decided not to clone or pull repository %v\n", repoName)
 			log.Printf("error: this is why: %v\n", repoStatus)
 			errorCount = errorCount + 1

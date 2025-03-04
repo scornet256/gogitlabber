@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"log"
 	"os"
 	"strings"
 )
@@ -23,45 +23,45 @@ func manageArguments() {
 	gitlabToken = *tokenFlag
 	gitlabHost = *hostFlag
 
-  // manage gitlab api option
+	// manage gitlab api option
 	switch envToken := os.Getenv("GITLAB_API_TOKEN"); {
 	case envToken != "":
 		gitlabToken = envToken
 	default:
-		fmt.Println("fatal: No GitLab API Token found.")
+		log.Printf("no gitlab api token found")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-  // manage gitlab url option
+	// manage gitlab url option
 	switch envHost := os.Getenv("GITLAB_URL"); {
 	case envHost != "":
 		gitlabHost = envHost
 	default:
-		fmt.Println("fatal: No GitLab Host found.")
+		log.Fatalf("no gitlab host found")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-  // manage destination option
+	// manage destination option
 	switch envRepoDest := os.Getenv("GOGITLABBER_DESTINATION"); {
 	case envRepoDest != "":
 		repoDestinationPre = envRepoDest
 	default:
-		fmt.Println("fatal: No destination found.")
+		log.Fatalf("no destination found")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
 	// add slash 🎩🎸 if not provided
-  switch {
-  case !strings.HasSuffix(repoDestinationPre, "/"):
+	switch {
+	case !strings.HasSuffix(repoDestinationPre, "/"):
 		repoDestinationPre += "/"
 	}
 
-  // manage archived option
+	// manage archived option
 	switch envArchived := os.Getenv("GOGITLABBER_ARCHIVED"); {
-  case envArchived == "":
+	case envArchived == "":
 		includeArchived = "excluded"
 
 	case envArchived == "any":
@@ -73,8 +73,8 @@ func manageArguments() {
 	case envArchived == "excluded":
 		includeArchived = envArchived
 
-  default:
-		fmt.Println("fatal: Wrong archive option found.")
+	default:
+		log.Fatalf("wrong archive option found")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}

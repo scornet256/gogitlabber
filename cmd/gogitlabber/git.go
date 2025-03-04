@@ -10,10 +10,8 @@ import (
 func checkoutRepositories(repositories []Repository) {
 	for _, repo := range repositories {
 
-		// get repository name
+		// get repository name + create repo destination
 		repoName := string(repo.PathWithNamespace)
-
-		// create repository destination
 		repoDestination := repoDestinationPre + repoName
 
 		// make gitlab url
@@ -33,7 +31,7 @@ func checkoutRepositories(repositories []Repository) {
 		switch {
 		case strings.Contains(string(repoStatus), "No such file or directory"):
 
-      // update the progress bar
+			// update the progress bar
 			descriptionPrefixPre := "Cloning repository "
 			descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 			bar.Describe(descriptionPrefix)
@@ -47,7 +45,7 @@ func checkoutRepositories(repositories []Repository) {
 			}
 			_, err := cloneRepository(repoDestination, url)
 			if err != nil {
-				log.Printf("error: %v", err)
+				log.Printf("error: %v\n", err)
 			}
 			clonedCount = clonedCount + 1
 			progressBarAdd(1)
@@ -95,12 +93,12 @@ func pullRepository(repoName string, repoDestination string) {
 		errorCount = errorCount + 1
 		pulledCount = pulledCount - 1
 
-    switch {
-    case strings.Contains(string(pullOutput), "You have unstaged changes"):
+		switch {
+		case strings.Contains(string(pullOutput), "You have unstaged changes"):
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
 
-    default: 
-			log.Printf("pull error: %v", err)
+		default:
+			log.Printf("error: pulling %v\n", err)
 		}
 	}
 }

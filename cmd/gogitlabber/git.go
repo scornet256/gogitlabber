@@ -94,9 +94,12 @@ func pullRepository(repoName string, repoDestination string) {
 	if err != nil {
 		errorCount = errorCount + 1
 		pulledCount = pulledCount - 1
-		if strings.Contains(string(pullOutput), "You have unstaged changes") {
+
+    switch {
+    case strings.Contains(string(pullOutput), "You have unstaged changes"):
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
-		} else {
+
+    default: 
 			log.Printf("pull error: %v", err)
 		}
 	}

@@ -23,61 +23,59 @@ func manageArguments() {
 	gitlabToken = *tokenFlag
 	gitlabHost = *hostFlag
 
-	// use environment variable if set, otherwise use flag value
-	if envHost := os.Getenv("GITLAB_URL"); envHost != "" {
-		gitlabHost = envHost
-	}
-
-	if envToken := os.Getenv("GITLAB_API_TOKEN"); envToken != "" {
+  // manage gitlab api option
+	switch envToken := os.Getenv("GITLAB_API_TOKEN"); {
+	case envToken != "":
 		gitlabToken = envToken
-	}
-
-	if envRepoDest := os.Getenv("GOGITLABBER_DESTINATION"); envRepoDest != "" {
-		repoDestinationPre = envRepoDest
-	}
-
-	if envArchived := os.Getenv("GOGITLABBER_ARCHIVED"); envArchived != "" {
-		includeArchived = envArchived
-	}
-
-	// fail if no configuration found
-	if gitlabHost == "" {
-		fmt.Println("Fatal: No GitLab Host found.")
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
-	if gitlabToken == "" {
+	default:
 		fmt.Println("Fatal: No GitLab API Token found.")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	if repoDestinationPre == "" {
+  // manage gitlab url option
+	switch envHost := os.Getenv("GITLAB_URL"); {
+	case envHost != "":
+		gitlabHost = envHost
+	default:
+		fmt.Println("Fatal: No GitLab Host found.")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+  // manage destination option
+	switch envRepoDest := os.Getenv("GOGITLABBER_DESTINATION"); {
+	case envRepoDest != "":
+		repoDestinationPre = envRepoDest
+	default:
 		fmt.Println("Fatal: No destination found.")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
 
-	// --archive options:
-	// - any        (fetch both)
-	// - exclusive  (fetch archived exclusive)
-	// - excluded   (fetch non-archived exclusive - default)
-	if includeArchived == "" {
-		includeArchived = "excluded"
+	// add slash 🎩🎸 if not provided
+  switch {
+  case !strings.HasSuffix(repoDestinationPre, "/"):
+		repoDestinationPre += "/"
 	}
 
-	if includeArchived != "any" &&
-		includeArchived != "exclusive" &&
-		includeArchived != "excluded" {
+  // manage archived option
+	switch envArchived := os.Getenv("GOGITLABBER_ARCHIVED"); {
+  case envArchived == "":
+		includeArchived = "excluded"
+
+	case envArchived == "any":
+		includeArchived = envArchived
+
+	case envArchived == "exclusive":
+		includeArchived = envArchived
+
+	case envArchived == "excluded":
+		includeArchived = envArchived
+
+  default:
 		fmt.Println("Fatal: Wrong archive option found.")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-
-	// add slash 🎩🎸 if not provided
-	if !strings.HasSuffix(repoDestinationPre, "/") {
-		repoDestinationPre += "/"
-	}
-
 }

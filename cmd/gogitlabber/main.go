@@ -33,22 +33,22 @@ func main() {
 	// check for git
 	err := verifyGitAvailable()
 	if err != nil {
-    logFatal("FATAL: git not found in path: %v", err)
+		logFatal("FATAL: git not found in path: %v", err)
 	}
-  logPrint("Git is available. Proceeding with the program.", nil)
+	logPrint("Git is available. Proceeding with the program.", nil)
 
 	// fetch repository information from gitlab
 	repositories, err := fetchRepositoriesGitlab()
 	if err != nil {
 		logFatal("FATAL: %v", err)
 	}
-  logPrint("Logged into GitLab, Repositories found. Proceeding with the program.", nil)
+	logPrint("Logged into GitLab, Repositories found. Proceeding with the program.", nil)
 
-  // print progressbar ony if not in verbose mode
-  if !verbose {
-	  progressBar(repositories)
-    log.SetOutput(io.Discard)
-  }
+	// print progressbar ony if not in verbose mode
+	if !verbose {
+		progressBar(repositories)
+		log.SetOutput(io.Discard)
+	}
 
 	// manage found repositories
 	checkoutRepositories(repositories, concurrency)

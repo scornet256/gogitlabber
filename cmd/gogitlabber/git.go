@@ -81,15 +81,15 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			case strings.Contains(string(repoStatus), url):
 				pullRepository(repoName, repoDestination)
 				if !verbose {
-          descriptionPrefixPre := "Pulling repository "
-          descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-          bar.Describe(descriptionPrefix)
+					descriptionPrefixPre := "Pulling repository "
+					descriptionPrefix := descriptionPrefixPre + repoName + " ..."
+					bar.Describe(descriptionPrefix)
 					progressBarAdd(1)
 				}
 
 			default:
-				logPrint("ERROR: decided not to clone or pull repository" + repoName, nil)
-        logPrint("ERROR: this is why: " + repoStatus, nil)
+				logPrint("ERROR: decided not to clone or pull repository"+repoName, nil)
+				logPrint("ERROR: this is why: "+repoStatus, nil)
 
 				// set a lock, increment counters and unlock
 				mu.Lock()
@@ -143,7 +143,7 @@ func pullRepository(repoName string, repoDestination string) {
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
 
 		default:
-      logPrint("ERROR: pulling " + repoName, nil)
+			logPrint("ERROR: pulling "+repoName, nil)
 		}
 	}
 }

@@ -7,7 +7,7 @@ import (
 func verifyGitAvailable() error {
 	_, err := exec.LookPath("git")
 	if err != nil {
-    return err
+		return err
 	}
-  return nil
+	return nil
 }

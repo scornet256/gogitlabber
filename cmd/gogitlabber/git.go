@@ -36,6 +36,9 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			repoName := string(repo.PathWithNamespace)
 			repoDestination := repoDestinationPre + repoName
 
+			// log activity
+			logPrint("Starting on repository: "+repoName, nil)
+
 			// make gitlab url
 			url := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git", gitlabToken, gitlabHost, repoName)
 
@@ -43,6 +46,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			checkRepo := func(repoDestination string) string {
 				checkCmd := exec.Command("git", "-C", repoDestination, "remote", "-v")
 				checkOutput, _ := checkCmd.CombinedOutput()
+				logPrint("Checking status for repository: "+repoName, nil)
 
 				return string(checkOutput)
 			}
@@ -53,10 +57,14 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			switch {
 			case strings.Contains(string(repoStatus), "No such file or directory"):
 
+				// log activity
+				logPrint("Decided to clone repository: "+repoName, nil)
+
 				// clone the repo
 				cloneRepository := func(repoDestination string, url string) (string, error) {
 					cloneCmd := exec.Command("git", "clone", url, repoDestination)
 					cloneOutput, err := cloneCmd.CombinedOutput()
+					logPrint("Cloning repository: "+repoName+" to "+repoDestination, nil)
 
 					return string(cloneOutput), err
 				}
@@ -79,6 +87,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 
 			// pull the latest
 			case strings.Contains(string(repoStatus), url):
+				logPrint("Decided to pull repository: "+repoName, nil)
 				pullRepository(repoName, repoDestination)
 				if !verbose {
 					descriptionPrefixPre := "Pulling repository "
@@ -88,7 +97,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				}
 
 			default:
-				logPrint("ERROR: decided not to clone or pull repository"+repoName, nil)
+				logPrint("ERROR: decided not to clone or pull repository: "+repoName, nil)
 				logPrint("ERROR: this is why: "+repoStatus, nil)
 
 				// set a lock, increment counters and unlock
@@ -108,6 +117,9 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 
 func pullRepository(repoName string, repoDestination string) {
 
+	// log activity
+	logPrint("Pulling repository: "+repoName+" at "+repoDestination, nil)
+
 	// find remote
 	findRemote := func(repoDestination string) (string, error) {
 		remoteCmd := exec.Command("git", "-C", repoDestination, "remote", "show")
@@ -116,7 +128,9 @@ func pullRepository(repoName string, repoDestination string) {
 			return "", fmt.Errorf("finding remote: %v\n", err)
 		}
 
+		logPrint("Finding remote for repository: "+repoName+" at "+repoDestination, nil)
 		remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]
+		logPrint("Found remote; "+remote+" for repository: "+repoName+" at "+repoDestination, nil)
 		return remote, nil
 	}
 	remote, _ := findRemote(repoDestination)
@@ -141,9 +155,13 @@ func pullRepository(repoName string, repoDestination string) {
 		switch {
 		case strings.Contains(string(pullOutput), "You have unstaged changes"):
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
+			logPrint("Found unstaged changes for repository: "+repoName+" at "+repoDestination, nil)
 
 		default:
 			logPrint("ERROR: pulling "+repoName, nil)
 		}
 	}
+
+	// log activity
+	logPrint("Pulled repository: "+repoName+" at "+repoDestination, nil)
 }

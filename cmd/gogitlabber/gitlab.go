@@ -59,7 +59,10 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	}
 
 	repoCount := len(repositories)
-	bar.Set(0)
+	err = bar.Set(0)
+	if err != nil {
+		logFatal("Could not reset the progressbar", err)
+	}
 	bar.ChangeMax(repoCount)
 
 	logPrint("HTTP: Returning repositories found", nil)

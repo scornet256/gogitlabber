@@ -91,17 +91,17 @@ func manageArguments() {
 	var debugFlag = flag.Bool(
 		"debug",
 		debug,
-		"Toggle debug mode\n example: -debug=true\nenv = GOGITLABBER_DEBUG\n")
+		"Toggle debug mode\n  example: -debug=true\nenv = GOGITLABBER_DEBUG\n")
 
 	flag.Parse()
 
 	// Override with flag values (higher precedence)
 	concurrency = *concurrencyFlag
+	debug = *debugFlag
 	gitlabHost = *hostFlag
 	gitlabToken = *tokenFlag
 	includeArchived = *archivedFlag
 	repoDestinationPre = *destinationFlag
-	debug = *debugFlag
 
 	// add slash 🎩🎸 if not provided
 	if !strings.HasSuffix(repoDestinationPre, "/") {

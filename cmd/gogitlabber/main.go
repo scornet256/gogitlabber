@@ -7,11 +7,11 @@ import (
 
 // userdata
 var concurrency int
+var debug bool
 var gitlabHost string
 var gitlabToken string
 var includeArchived string
 var repoDestinationPre string
-var debug bool
 
 // keep count 🧛
 var clonedCount int

@@ -26,6 +26,7 @@ Usage of gogitlabber:
         Toggle debug mode
          example: -debug=true
         env = GOGITLABBER_DEBUG
+         (default false)
 
   -destination string
         Specify where to check the repositories out

@@ -37,16 +37,16 @@ func main() {
 	}
 	logPrint("VALIDATION: git found in path", nil)
 
+	// make initial progressbar
+	if !debug {
+		progressBar()
+		log.SetOutput(io.Discard)
+	}
+
 	// fetch repository information from gitlab
 	repositories, err := fetchRepositoriesGitlab()
 	if err != nil {
 		logFatal("FATAL: %v", err)
-	}
-
-	// print progressbar ony if not in debug mode
-	if !debug {
-		progressBar(repositories)
-		log.SetOutput(io.Discard)
 	}
 
 	// manage found repositories

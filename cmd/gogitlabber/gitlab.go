@@ -58,6 +58,10 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 		return repositories, fmt.Errorf("ERROR: no repositories found\n")
 	}
 
+	repoCount := len(repositories)
+	bar.Set(0)
+	bar.ChangeMax(repoCount)
+
 	logPrint("HTTP: Returning repositories found", nil)
 	return repositories, nil
 }

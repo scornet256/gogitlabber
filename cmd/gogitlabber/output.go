@@ -10,25 +10,18 @@ import (
 
 var bar *progressbar.ProgressBar
 
-func progressBar(repositories []Repository) {
-	repoCount := len(repositories)
+func progressBar() {
 
-	// make progressbar
-	barPrefix := "Getting your one and only repository..."
-	if repoCount > 1 {
-		barPrefix = "Getting your repositories..."
-	}
-
-	bar = progressbar.NewOptions(
-		repoCount,
-		progressbar.OptionSetWriter(ansi.NewAnsiStdout()),
+	// configure progressbar
+	bar = progressbar.NewOptions(2,
 		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionShowCount(),
-		progressbar.OptionShowDescriptionAtLineEnd(),
+		progressbar.OptionSetDescription("Logging into Gitlab..."),
 		progressbar.OptionSetElapsedTime(false),
 		progressbar.OptionSetPredictTime(false),
 		progressbar.OptionSetWidth(20),
-		progressbar.OptionSetDescription(barPrefix),
+		progressbar.OptionSetWriter(ansi.NewAnsiStdout()),
+		progressbar.OptionShowCount(),
+		progressbar.OptionShowDescriptionAtLineEnd(),
 		progressbar.OptionSetTheme(progressbar.Theme{
 			Saucer:        "[green]=[reset]",
 			SaucerHead:    "[green]>[reset]",
@@ -37,6 +30,14 @@ func progressBar(repositories []Repository) {
 			BarEnd:        "]",
 		}),
 	)
+
+	// initialize progressbar
+	logPrint("Initialize progressbar", nil)
+	err := bar.RenderBlank()
+	progressBarAdd(1)
+	if err != nil {
+		logFatal("Initialization of the progressbar failed", err)
+	}
 }
 
 func progressBarAdd(amount int) {

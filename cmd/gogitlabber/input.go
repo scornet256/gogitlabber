@@ -95,7 +95,7 @@ func manageArguments() {
 
 	flag.Parse()
 
-	// Override with flag values (higher precedence)
+	// override with flag values (higher precedence)
 	concurrency = *concurrencyFlag
 	debug = *debugFlag
 	gitlabHost = *hostFlag
@@ -122,7 +122,7 @@ func manageArguments() {
 		logFatal("Configuration: Invalid archive option: "+includeArchived, nil)
 	}
 
-	// Log configuration
+	// log configuration
 	logPrint("Configuration: Using GitLab host: "+gitlabHost, nil)
 	logPrint("Configuration: Using destination: "+repoDestinationPre, nil)
 	logPrint("Configuration: Using concurrency: "+strconv.Itoa(concurrency), nil)

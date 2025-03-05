@@ -68,7 +68,7 @@ func printPullError(pullErrorMsg []string) {
 }
 
 func logPrint(message string, err error) {
-	if verbose == true {
+	if verbose {
 		if err != nil {
 			log.Printf("gogitlabber | %v error: %v\n", message, err)
 		}

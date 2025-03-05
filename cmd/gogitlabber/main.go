@@ -11,7 +11,7 @@ var gitlabHost string
 var gitlabToken string
 var includeArchived string
 var repoDestinationPre string
-var verbose bool
+var debug bool
 
 // keep count 🧛
 var clonedCount int
@@ -43,8 +43,8 @@ func main() {
 		logFatal("FATAL: %v", err)
 	}
 
-	// print progressbar ony if not in verbose mode
-	if !verbose {
+	// print progressbar ony if not in debug mode
+	if !debug {
 		progressBar(repositories)
 		log.SetOutput(io.Discard)
 	}

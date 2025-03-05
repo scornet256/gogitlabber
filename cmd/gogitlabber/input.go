@@ -16,7 +16,7 @@ func manageArguments() {
 	var destinationFlag = flag.String("destination", "$HOME/Documents", "Specify where to check the repositories out\n  example: -destination=$HOME/repos\nenv = GOGITLABBER_DESTINATION\n")
 	var hostFlag = flag.String("gitlab-url", "gitlab.com", "Specify GitLab host\n  example: -gitlab-url=gitlab.com\nenv = GITLAB_URL\n")
 	var tokenFlag = flag.String("gitlab-api-token", "", "Specify GitLab API token\n  example: -gitlab-api=glpat-xxxx\nenv = GITLAB_API_TOKEN\n")
-	var verboseFlag = flag.Bool("verbose", false, "Specify verbosity\n example: -verbose=true\nenv = GOGITLABBER_VERBOSE\n")
+	var debugFlag = flag.Bool("debug", false, "Toggle debug mode\n example: -debug=true\nenv = GOGITLABBER_DEBUG\n")
 
 	flag.Parse()
 
@@ -26,50 +26,49 @@ func manageArguments() {
 	gitlabToken = *tokenFlag
 	includeArchived = *archivedFlag
 	repoDestinationPre = *destinationFlag
-	verbose = *verboseFlag
+	debug = *debugFlag
 
-	// manage verbosity option
-	switch envVerbose := os.Getenv("GOGITLABBER_VERBOSE"); {
-	case envVerbose != "":
+	// manage verosity option
+	switch envDebug := os.Getenv("GOGITLABBER_DEBUG"); {
+	case envDebug != "":
 		var err error
-		verbose, err = strconv.ParseBool(envVerbose)
-		logPrint("CONFIG: verbose option found", nil)
+		debug, err = strconv.ParseBool(envDebug)
+		logPrint("Configuration: debug option found", nil)
 		if err != nil {
 			logFatal("FATAL: config; not a valid bool", nil)
 		}
 	default:
-		flag.Usage()
-		logFatal("FATAL: config; no verbose option found", nil)
+		debug = false
 	}
 
 	// manage gitlab api option
 	switch envToken := os.Getenv("GITLAB_API_TOKEN"); {
 	case envToken != "":
 		gitlabToken = envToken
-		logPrint("CONFIG: Gitlab API Token found", nil)
+		logPrint("Configuration: Gitlab API Token found", nil)
 	default:
 		flag.Usage()
-		logFatal("CONFIG: Giltab API Token not found", nil)
+		logFatal("Configuration: Giltab API Token not found", nil)
 	}
 
 	// manage gitlab url option
 	switch envHost := os.Getenv("GITLAB_URL"); {
 	case envHost != "":
 		gitlabHost = envHost
-		logPrint("CONFIG: Gitlab host found", nil)
+		logPrint("Configuration: Gitlab host found", nil)
 	default:
 		flag.Usage()
-		logFatal("CONFIG: Gitlab host not found", nil)
+		logFatal("Configuration: Gitlab host not found", nil)
 	}
 
 	// manage destination option
 	switch envRepoDest := os.Getenv("GOGITLABBER_DESTINATION"); {
 	case envRepoDest != "":
 		repoDestinationPre = envRepoDest
-		logPrint("CONFIG: destination found", nil)
+		logPrint("Configuration: destination found", nil)
 	default:
 		flag.Usage()
-		logFatal("CONFIG: destination not found", nil)
+		logFatal("Configuration: destination not found", nil)
 	}
 
 	// add slash 🎩🎸 if not provided
@@ -85,10 +84,10 @@ func manageArguments() {
 	case envConcurrency != "":
 		concurrencyValue, err := strconv.Atoi(envConcurrency)
 		if err != nil {
-			logFatal("invalid concurrency value in environment: %v", err)
+			logFatal("invalid concurrency value found in environment: %v", err)
 		}
 		concurrency = concurrencyValue
-		logPrint("CONFIG: concurrency option found", nil)
+		logPrint("Configuration: concurrency option found", nil)
 	default:
 		flag.Usage()
 		log.Fatalln("FATAL: config; concurrency not found")
@@ -98,22 +97,22 @@ func manageArguments() {
 	switch envArchived := os.Getenv("GOGITLABBER_ARCHIVED"); {
 	case envArchived == "":
 		includeArchived = "excluded"
-		logPrint("CONFIG: archive option found", nil)
+		logPrint("Configuration: archive option found", nil)
 
 	case envArchived == "any":
 		includeArchived = envArchived
-		logPrint("CONFIG: archive option found", nil)
+		logPrint("Configuration: archive option found", nil)
 
 	case envArchived == "exclusive":
 		includeArchived = envArchived
-		logPrint("CONFIG: archive option found", nil)
+		logPrint("Configuration: archive option found", nil)
 
 	case envArchived == "excluded":
 		includeArchived = envArchived
-		logPrint("CONFIG: archive option found", nil)
+		logPrint("Configuration: archive option found", nil)
 
 	default:
 		flag.Usage()
-		logFatal("FATAL: config; no or wrong archive option found", nil)
+		logFatal("FATAL: Configuration: no or wrong archive option found", nil)
 	}
 }

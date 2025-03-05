@@ -76,7 +76,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				// set a lock, increment counters, update progressbar  and unlock
 				mu.Lock()
 				clonedCount++
-				if !verbose {
+				if !debug {
 					// update the progress bar
 					descriptionPrefixPre := "Cloning repository "
 					descriptionPrefix := descriptionPrefixPre + repoName + " ..."
@@ -89,7 +89,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			case strings.Contains(string(repoStatus), url):
 				logPrint("Decided to pull repository: "+repoName, nil)
 				pullRepository(repoName, repoDestination)
-				if !verbose {
+				if !debug {
 					descriptionPrefixPre := "Pulling repository "
 					descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 					bar.Describe(descriptionPrefix)
@@ -103,7 +103,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				// set a lock, increment counters and unlock
 				mu.Lock()
 				errorCount++
-				if !verbose {
+				if !debug {
 					progressBarAdd(1)
 				}
 				mu.Unlock()

@@ -1,13 +1,13 @@
 package main
 
 import (
-	"log"
 	"os/exec"
 )
 
-func verifyGitAvailable() {
+func verifyGitAvailable() error {
 	_, err := exec.LookPath("git")
 	if err != nil {
-		log.Fatal("could not find git in path")
+    return err
 	}
+  return nil
 }

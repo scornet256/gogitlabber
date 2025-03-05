@@ -1,6 +1,9 @@
 package main
 
-import "log"
+import (
+	"io"
+	"log"
+)
 
 // userdata
 var concurrency int
@@ -8,6 +11,7 @@ var gitlabHost string
 var gitlabToken string
 var includeArchived string
 var repoDestinationPre string
+var verbose bool
 
 // keep count 🧛
 var clonedCount int
@@ -27,16 +31,26 @@ func main() {
 	manageArguments()
 
 	// check for git
-	verifyGitAvailable()
+	err := verifyGitAvailable()
+	if err != nil {
+    logFatal("FATAL: git not found in path: %v", err)
+	}
+  logPrint("Git is available. Proceeding with the program.", nil)
 
 	// fetch repository information from gitlab
 	repositories, err := fetchRepositoriesGitlab()
-  if err != nil {
-     log.Fatalf("FATAL: %v", err)
+	if err != nil {
+		logFatal("FATAL: %v", err)
+	}
+  logPrint("Logged into GitLab, Repositories found. Proceeding with the program.", nil)
+
+  // print progressbar ony if not in verbose mode
+  if !verbose {
+	  progressBar(repositories)
+    log.SetOutput(io.Discard)
   }
 
 	// manage found repositories
-	progressBar(repositories)
 	checkoutRepositories(repositories, concurrency)
 	printSummary()
 	printPullError(pullErrorMsg)

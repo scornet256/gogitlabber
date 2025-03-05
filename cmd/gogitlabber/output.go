@@ -41,7 +41,7 @@ func progressBar(repositories []Repository) {
 
 func progressBarAdd(amount int) {
 	if err := bar.Add(amount); err != nil {
-    log.Printf("ERROR: Progress bar update error: %v\n", err)
+		logPrint("ERROR: Progress bar update error: %v\n", err)
 	}
 }
 
@@ -65,4 +65,22 @@ func printPullError(pullErrorMsg []string) {
 			fmt.Printf("❕%s has unstaged changes.\n", repo)
 		}
 	}
+}
+
+func logPrint(message string, err error) {
+	if verbose == true {
+		if err != nil {
+      log.Printf("gogitlabber | %v error: %v\n", message, err)
+		}
+    if err == nil {
+		  log.Printf("gogitlabber | %v\n", message)
+    }
+	}
+}
+
+func logFatal(message string, err error) {
+	if err != nil {
+		log.Fatalf("gogitlabber | FATAL: %v error: %v\n", message, err)
+	}
+	log.Fatalf("gogitlabber | FATAL: %v\n", message)
 }

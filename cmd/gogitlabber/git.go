@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os/exec"
 	"strings"
 	"sync"
@@ -54,10 +53,6 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			switch {
 			case strings.Contains(string(repoStatus), "No such file or directory"):
 
-				// update the progress bar
-				descriptionPrefixPre := "Cloning repository "
-				descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-
 				// clone the repo
 				cloneRepository := func(repoDestination string, url string) (string, error) {
 					cloneCmd := exec.Command("git", "clone", url, repoDestination)
@@ -67,29 +62,41 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				}
 				_, err := cloneRepository(repoDestination, url)
 				if err != nil {
-					log.Printf("ERROR: %v\n", err)
+					logPrint("ERROR: %v\n", err)
 				}
 
-				// set a lock, increment counters and unlock
+				// set a lock, increment counters, update progressbar  and unlock
 				mu.Lock()
 				clonedCount++
-				bar.Describe(descriptionPrefix)
-				progressBarAdd(1)
+				if !verbose {
+					// update the progress bar
+					descriptionPrefixPre := "Cloning repository "
+					descriptionPrefix := descriptionPrefixPre + repoName + " ..."
+					bar.Describe(descriptionPrefix)
+					progressBarAdd(1)
+				}
 				mu.Unlock()
 
 			// pull the latest
 			case strings.Contains(string(repoStatus), url):
 				pullRepository(repoName, repoDestination)
-				progressBarAdd(1)
+				if !verbose {
+          descriptionPrefixPre := "Pulling repository "
+          descriptionPrefix := descriptionPrefixPre + repoName + " ..."
+          bar.Describe(descriptionPrefix)
+					progressBarAdd(1)
+				}
 
 			default:
-				log.Printf("ERROR: decided not to clone or pull repository %v\n", repoName)
-				log.Printf("ERROR: this is why: %v\n", repoStatus)
+				logPrint("ERROR: decided not to clone or pull repository" + repoName, nil)
+        logPrint("ERROR: this is why: " + repoStatus, nil)
 
 				// set a lock, increment counters and unlock
 				mu.Lock()
 				errorCount++
-				progressBarAdd(1)
+				if !verbose {
+					progressBarAdd(1)
+				}
 				mu.Unlock()
 			}
 		}(repo)
@@ -100,10 +107,6 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 }
 
 func pullRepository(repoName string, repoDestination string) {
-
-	// update the progress bar
-	descriptionPrefixPre := "Pulling repository "
-	descriptionPrefix := descriptionPrefixPre + repoName + " ..."
 
 	// find remote
 	findRemote := func(repoDestination string) (string, error) {
@@ -124,7 +127,6 @@ func pullRepository(repoName string, repoDestination string) {
 
 	// set a lock, increment counters and unlock
 	mu.Lock()
-	bar.Describe(descriptionPrefix)
 	pulledCount++
 	mu.Unlock()
 
@@ -141,7 +143,7 @@ func pullRepository(repoName string, repoDestination string) {
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
 
 		default:
-			log.Printf("ERROR: pulling %v\n", err)
+      logPrint("ERROR: pulling " + repoName, nil)
 		}
 	}
 }

@@ -24,7 +24,7 @@ func TestVerifyGitAvailable(t *testing.T) {
 		return "/usr/bin/git", nil
 	})
 	if err != nil {
-		t.Errorf("Expected no error when git is available, got: %v", err)
+		t.Errorf("expected no error when git is available, got: %v", err)
 	}
 
 	// test case 2: git is not available
@@ -32,6 +32,6 @@ func TestVerifyGitAvailable(t *testing.T) {
 		return "", errors.New("git not found")
 	})
 	if err == nil {
-		t.Error("Expected error when git is not available, got nil")
+		t.Error("expected error when git is not available, got nil")
 	}
 }

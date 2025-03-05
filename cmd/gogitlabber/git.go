@@ -57,7 +57,6 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				// update the progress bar
 				descriptionPrefixPre := "Cloning repository "
 				descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-				bar.Describe(descriptionPrefix)
 
 				// clone the repo
 				cloneRepository := func(repoDestination string, url string) (string, error) {
@@ -74,8 +73,9 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				// set a lock, increment counters and unlock
 				mu.Lock()
 				clonedCount++
-				mu.Unlock()
+				bar.Describe(descriptionPrefix)
 				progressBarAdd(1)
+				mu.Unlock()
 
 			// pull the latest
 			case strings.Contains(string(repoStatus), url):
@@ -89,8 +89,8 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				// set a lock, increment counters and unlock
 				mu.Lock()
 				errorCount++
-				mu.Unlock()
 				progressBarAdd(1)
+				mu.Unlock()
 			}
 		}(repo)
 	}
@@ -104,7 +104,6 @@ func pullRepository(repoName string, repoDestination string) {
 	// update the progress bar
 	descriptionPrefixPre := "Pulling repository "
 	descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-	bar.Describe(descriptionPrefix)
 
 	// find remote
 	findRemote := func(repoDestination string) (string, error) {
@@ -125,6 +124,7 @@ func pullRepository(repoName string, repoDestination string) {
 
 	// set a lock, increment counters and unlock
 	mu.Lock()
+	bar.Describe(descriptionPrefix)
 	pulledCount++
 	mu.Unlock()
 

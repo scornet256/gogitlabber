@@ -18,6 +18,8 @@ github.com/schollz/progressbar/v3 v3.18.0 h1:uXdoHABRFmNIjUfte/Ex7WtuyVslrw2wVPQ
 github.com/schollz/progressbar/v3 v3.18.0/go.mod h1:IsO3lpbaGuzh8zIMzgY3+J8l4C8GjO0Y9S69eFvNsec=
 github.com/scornet256/go-logger v0.0.0-20250306110019-822a77b239f9 h1:oHcJkJ1kyptkzoiyplglByhjk3DOt6EVllMeS/00hSI=
 github.com/scornet256/go-logger v0.0.0-20250306110019-822a77b239f9/go.mod h1:GptTzXTPlyNj2mZjhRyWfmP4EDb1Ca2osDpooBy6MmI=
+github.com/scornet256/go-logger v0.0.0-20250306113004-0062c214ab34 h1:icrxu4GofO9DYa4Qb06OLvaLbs/eZGQJLFQz35fQ9cQ=
+github.com/scornet256/go-logger v0.0.0-20250306113004-0062c214ab34/go.mod h1:GptTzXTPlyNj2mZjhRyWfmP4EDb1Ca2osDpooBy6MmI=
 github.com/stretchr/testify v1.9.0 h1:HtqpIVDClZ4nwg75+f6Lvsy/wHu+3BoSGCbBAcpTsTg=
 github.com/stretchr/testify v1.9.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
 golang.org/x/sys v0.6.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=

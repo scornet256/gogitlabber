@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"gogitlabber/cmd/gogitlabber/logging"
 
 	"github.com/k0kubun/go-ansi"
 	"github.com/schollz/progressbar/v3"
@@ -32,17 +32,17 @@ func progressBar() {
 	)
 
 	// initialize progressbar
-	logPrint("Initialize progressbar", nil)
+	logging.LogPrint(debug, "Initialize progressbar", nil)
 	err := bar.RenderBlank()
 	progressBarAdd(1)
 	if err != nil {
-		logFatal("Initialization of the progressbar failed", err)
+		logging.LogFatal("Initialization of the progressbar failed", err)
 	}
 }
 
 func progressBarAdd(amount int) {
 	if err := bar.Add(amount); err != nil {
-		logPrint("ERROR: Progress bar update error: %v\n", err)
+		logging.LogPrint(debug, "ERROR: Progress bar update error: %v\n", err)
 	}
 }
 
@@ -66,22 +66,4 @@ func printPullError(pullErrorMsg []string) {
 			fmt.Printf("❕%s has unstaged changes.\n", repo)
 		}
 	}
-}
-
-func logPrint(message string, err error) {
-	if debug {
-		if err != nil {
-			log.Printf("gogitlabber | DEBUG: %v error: %v\n", message, err)
-		}
-		if err == nil {
-			log.Printf("gogitlabber | DEBUG: %v\n", message)
-		}
-	}
-}
-
-func logFatal(message string, err error) {
-	if err != nil {
-		log.Fatalf("gogitlabber | FATAL: %v error: %v\n", message, err)
-	}
-	log.Fatalf("gogitlabber | FATAL: %v\n", message)
 }

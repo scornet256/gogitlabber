@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gogitlabber/cmd/gogitlabber/logging"
 	"io"
 	"log"
 )
@@ -33,9 +34,9 @@ func main() {
 	// check for git
 	err := verifyGitAvailable()
 	if err != nil {
-		logFatal("git not found in path: %v", err)
+		logging.LogFatal("git not found in path: %v", err)
 	}
-	logPrint("VALIDATION: git found in path", nil)
+	logging.LogPrint(debug, "VALIDATION: git found in path", nil)
 
 	// make initial progressbar
 	if !debug {
@@ -46,7 +47,7 @@ func main() {
 	// fetch repository information from gitlab
 	repositories, err := fetchRepositoriesGitlab()
 	if err != nil {
-		logFatal("FATAL: %v", err)
+		logging.LogFatal("FATAL: %v", err)
 	}
 
 	// manage found repositories

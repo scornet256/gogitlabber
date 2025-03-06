@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"gogitlabber/cmd/gogitlabber/logging"
 	"os"
 	"strconv"
 	"strings"
@@ -23,7 +24,7 @@ func setDefaultsFromEnv() {
 		if debugVal, err := strconv.ParseBool(envDebug); err == nil {
 			debug = debugVal
 		} else {
-			logPrint("Warning: Invalid debug value in environment, using default", nil)
+			logging.LogPrint(debug, "Warning: Invalid debug value in environment, using default", nil)
 		}
 	}
 
@@ -43,7 +44,7 @@ func setDefaultsFromEnv() {
 		if concurrencyVal, err := strconv.Atoi(envConcurrency); err == nil {
 			concurrency = concurrencyVal
 		} else {
-			logPrint("Warning: Invalid concurrency value in environment, using default", nil)
+			logging.LogPrint(debug, "Warning: Invalid concurrency value in environment, using default", nil)
 		}
 	}
 
@@ -52,7 +53,7 @@ func setDefaultsFromEnv() {
 		case "any", "exclusive", "excluded":
 			includeArchived = envArchived
 		default:
-			logPrint("Warning: Invalid archived value in environment, using default", nil)
+			logging.LogPrint(debug, "Warning: Invalid archived value in environment, using default", nil)
 		}
 	}
 }
@@ -111,7 +112,7 @@ func manageArguments() {
 	// validate required parameters
 	if gitlabToken == "" {
 		flag.Usage()
-		logFatal("Configuration: Gitlab API Token not found", nil)
+		logging.LogFatal("Configuration: Gitlab API Token not found", nil)
 	}
 
 	// validate archived option
@@ -119,15 +120,15 @@ func manageArguments() {
 	case "any", "exclusive", "excluded":
 	default:
 		flag.Usage()
-		logFatal("Configuration: Invalid archive option: "+includeArchived, nil)
+		logging.LogFatal("Configuration: Invalid archive option: "+includeArchived, nil)
 	}
 
 	// log configuration
-	logPrint("Configuration: Using GitLab host: "+gitlabHost, nil)
-	logPrint("Configuration: Using destination: "+repoDestinationPre, nil)
-	logPrint("Configuration: Using concurrency: "+strconv.Itoa(concurrency), nil)
-	logPrint("Configuration: Using archived option: "+includeArchived, nil)
+	logging.LogPrint(debug, "Configuration: Using GitLab host: "+gitlabHost, nil)
+	logging.LogPrint(debug, "Configuration: Using destination: "+repoDestinationPre, nil)
+	logging.LogPrint(debug, "Configuration: Using concurrency: "+strconv.Itoa(concurrency), nil)
+	logging.LogPrint(debug, "Configuration: Using archived option: "+includeArchived, nil)
 	if debug {
-		logPrint("Configuration: Debug mode enabled", nil)
+		logging.LogPrint(debug, "Configuration: Debug mode enabled", nil)
 	}
 }

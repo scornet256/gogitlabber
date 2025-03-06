@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"gogitlabber/cmd/gogitlabber/logging"
 
 	"github.com/k0kubun/go-ansi"
 	"github.com/schollz/progressbar/v3"
+	"github.com/scornet256/go-logger"
 )
 
 var bar *progressbar.ProgressBar
@@ -32,18 +32,18 @@ func progressBar() {
 	)
 
 	// initialize progressbar
-	logging.Print("Initialize progressbar", nil)
+	logger.Print("Initialize progressbar", nil)
 	err := bar.RenderBlank()
 	progressBarAdd(1)
 	if err != nil {
-		logging.Fatal("Initialization of the progressbar failed", err)
+		logger.Fatal("Initialization of the progressbar failed", err)
 	}
 }
 
 func progressBarAdd(amount int) {
-	logging.Print("BAR: Progressing the bar", nil)
+	logger.Print("BAR: Progressing the bar", nil)
 	if err := bar.Add(amount); err != nil {
-		logging.Print("BAR: Could not update the bar", err)
+		logger.Print("BAR: Could not update the bar", err)
 	}
 }
 

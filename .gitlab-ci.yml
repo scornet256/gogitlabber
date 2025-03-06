@@ -16,7 +16,7 @@ testing:
     - "linter"
   image: "cr.simoncor.net/siempie/go-build:latest"
   script:
-    - "go test cmd/gogitlabber/*"
+    - "go test cmd/gogitlabber/*.go"
 
 build:
   stage: "build"

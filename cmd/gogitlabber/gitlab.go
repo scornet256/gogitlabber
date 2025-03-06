@@ -61,7 +61,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 
 	repoCount := len(repositories)
 
-	logging.Print("Resetting the progressbar", nil)
+	logging.Print("BAR: Resetting the progressbar", nil)
 	if !debug {
 		err = bar.Set(0)
 		if err != nil {
@@ -69,7 +69,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 		}
 	}
 
-	logging.Print("Increasing the max value of the progressbar", nil)
+	logging.Print("BAR: Increasing the max value of the progressbar", nil)
 	if !debug {
 		bar.ChangeMax(repoCount)
 	}

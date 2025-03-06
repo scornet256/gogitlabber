@@ -32,7 +32,7 @@ func progressBar() {
 	)
 
 	// initialize progressbar
-	logging.Print(debug, "Initialize progressbar", nil)
+	logging.Print("Initialize progressbar", nil)
 	err := bar.RenderBlank()
 	progressBarAdd(1)
 	if err != nil {
@@ -42,7 +42,7 @@ func progressBar() {
 
 func progressBarAdd(amount int) {
 	if err := bar.Add(amount); err != nil {
-		logging.Print(debug, "ERROR: Progress bar update error: %v\n", err)
+		logging.Print("ERROR: Progress bar update error: %v\n", err)
 	}
 }
 

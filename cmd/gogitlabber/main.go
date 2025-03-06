@@ -2,8 +2,6 @@ package main
 
 import (
 	"gogitlabber/cmd/gogitlabber/logging"
-	"io"
-	"log"
 )
 
 // userdata
@@ -28,20 +26,25 @@ type Repository struct {
 
 func main() {
 
+	// set appname for logging
+	logging.SetAppName("gogitlabber")
+
 	// manage all argument magic
 	manageArguments()
+
+	// set debugging
+	logging.SetDebug(debug)
 
 	// check for git
 	err := verifyGitAvailable()
 	if err != nil {
 		logging.Fatal("git not found in path: %v", err)
 	}
-	logging.Print(debug, "VALIDATION: git found in path", nil)
+	logging.Print("VALIDATION: git found in path", nil)
 
 	// make initial progressbar
 	if !debug {
 		progressBar()
-		log.SetOutput(io.Discard)
 	}
 
 	// fetch repository information from gitlab

@@ -28,16 +28,16 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	url := fmt.Sprintf("https://%s/api/v4/projects?%s&%s&%s%s",
 		gitlabHost, membership, order, perpage, archived)
 
-	logging.Print(debug, "HTTP: Creating API request", nil)
+	logging.Print("HTTP: Creating API request", nil)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("ERROR: creating request: %v\n", err)
 	}
 
-	logging.Print(debug, "HTTP: Adding PRIVATE-TOKEN header to API request", nil)
+	logging.Print("HTTP: Adding PRIVATE-TOKEN header to API request", nil)
 	req.Header.Set("PRIVATE-TOKEN", gitlabToken)
 
-	logging.Print(debug, "HTTP: Making request", nil)
+	logging.Print("HTTP: Making request", nil)
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -49,7 +49,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 		return nil, fmt.Errorf("ERROR: API request failed with status: %d\n", resp.StatusCode)
 	}
 
-	logging.Print(debug, "HTTP: Decoding JSON response", nil)
+	logging.Print("HTTP: Decoding JSON response", nil)
 	var repositories []Repository
 	if err := json.NewDecoder(resp.Body).Decode(&repositories); err != nil {
 		return nil, fmt.Errorf("ERROR: decoding response: %v\n", err)
@@ -60,12 +60,20 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	}
 
 	repoCount := len(repositories)
-	err = bar.Set(0)
-	if err != nil {
-		logging.Fatal("Could not reset the progressbar", err)
-	}
-	bar.ChangeMax(repoCount)
 
-	logging.Print(debug, "HTTP: Returning repositories found", nil)
+	logging.Print("Resetting the progressbar", nil)
+	if !debug {
+		err = bar.Set(0)
+		if err != nil {
+			logging.Fatal("Could not reset the progressbar", err)
+		}
+	}
+
+	logging.Print("Increasing the max value of the progressbar", nil)
+	if !debug {
+		bar.ChangeMax(repoCount)
+	}
+
+	logging.Print("HTTP: Returning repositories found", nil)
 	return repositories, nil
 }

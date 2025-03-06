@@ -24,7 +24,7 @@ build:
     - "testing"
   image: "cr.simoncor.net/siempie/go-build:latest"
   script:
-    - "GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o gogitlabber cmd/gogitlabber/*"
+    - "GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o gogitlabber cmd/gogitlabber/*.go"
   artifacts:
     name: "${CI_PROJECT_NAME}"
     paths:

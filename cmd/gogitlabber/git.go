@@ -38,7 +38,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			repoDestination := repoDestinationPre + repoName
 
 			// log activity
-			logging.LogPrint(debug, "Starting on repository: "+repoName, nil)
+			logging.Print(debug, "Starting on repository: "+repoName, nil)
 
 			// make gitlab url
 			url := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git", gitlabToken, gitlabHost, repoName)
@@ -47,7 +47,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			checkRepo := func(repoDestination string) string {
 				checkCmd := exec.Command("git", "-C", repoDestination, "remote", "-v")
 				checkOutput, _ := checkCmd.CombinedOutput()
-				logging.LogPrint(debug, "Checking status for repository: "+repoName, nil)
+				logging.Print(debug, "Checking status for repository: "+repoName, nil)
 
 				return string(checkOutput)
 			}
@@ -59,19 +59,19 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			case strings.Contains(string(repoStatus), "No such file or directory"):
 
 				// log activity
-				logging.LogPrint(debug, "Decided to clone repository: "+repoName, nil)
+				logging.Print(debug, "Decided to clone repository: "+repoName, nil)
 
 				// clone the repo
 				cloneRepository := func(repoDestination string, url string) (string, error) {
 					cloneCmd := exec.Command("git", "clone", url, repoDestination)
 					cloneOutput, err := cloneCmd.CombinedOutput()
-					logging.LogPrint(debug, "Cloning repository: "+repoName+" to "+repoDestination, nil)
+					logging.Print(debug, "Cloning repository: "+repoName+" to "+repoDestination, nil)
 
 					return string(cloneOutput), err
 				}
 				_, err := cloneRepository(repoDestination, url)
 				if err != nil {
-					logging.LogPrint(debug, "ERROR: %v\n", err)
+					logging.Print(debug, "ERROR: %v\n", err)
 				}
 
 				// set a lock, increment counters, update progressbar  and unlock
@@ -88,7 +88,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 
 			// pull the latest
 			case strings.Contains(string(repoStatus), url):
-				logging.LogPrint(debug, "Decided to pull repository: "+repoName, nil)
+				logging.Print(debug, "Decided to pull repository: "+repoName, nil)
 				pullRepository(repoName, repoDestination)
 				if !debug {
 					descriptionPrefixPre := "Pulling repository "
@@ -98,8 +98,8 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				}
 
 			default:
-				logging.LogPrint(debug, "ERROR: decided not to clone or pull repository: "+repoName, nil)
-				logging.LogPrint(debug, "ERROR: this is why: "+repoStatus, nil)
+				logging.Print(debug, "ERROR: decided not to clone or pull repository: "+repoName, nil)
+				logging.Print(debug, "ERROR: this is why: "+repoStatus, nil)
 
 				// set a lock, increment counters and unlock
 				mu.Lock()
@@ -119,7 +119,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 func pullRepository(repoName string, repoDestination string) {
 
 	// log activity
-	logging.LogPrint(debug, "Pulling repository: "+repoName+" at "+repoDestination, nil)
+	logging.Print(debug, "Pulling repository: "+repoName+" at "+repoDestination, nil)
 
 	// find remote
 	findRemote := func(repoDestination string) (string, error) {
@@ -129,9 +129,9 @@ func pullRepository(repoName string, repoDestination string) {
 			return "", fmt.Errorf("finding remote: %v\n", err)
 		}
 
-		logging.LogPrint(debug, "Finding remote for repository: "+repoName+" at "+repoDestination, nil)
+		logging.Print(debug, "Finding remote for repository: "+repoName+" at "+repoDestination, nil)
 		remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]
-		logging.LogPrint(debug, "Found remote; "+remote+" for repository: "+repoName+" at "+repoDestination, nil)
+		logging.Print(debug, "Found remote; "+remote+" for repository: "+repoName+" at "+repoDestination, nil)
 		return remote, nil
 	}
 	remote, _ := findRemote(repoDestination)
@@ -156,13 +156,13 @@ func pullRepository(repoName string, repoDestination string) {
 		switch {
 		case strings.Contains(string(pullOutput), "You have unstaged changes"):
 			pullErrorMsg = append(pullErrorMsg, repoDestination)
-			logging.LogPrint(debug, "Found unstaged changes for repository: "+repoName+" at "+repoDestination, nil)
+			logging.Print(debug, "Found unstaged changes for repository: "+repoName+" at "+repoDestination, nil)
 
 		default:
-			logging.LogPrint(debug, "ERROR: pulling "+repoName, nil)
+			logging.Print(debug, "ERROR: pulling "+repoName, nil)
 		}
 	}
 
 	// log activity
-	logging.LogPrint(debug, "Pulled repository: "+repoName+" at "+repoDestination, nil)
+	logging.Print(debug, "Pulled repository: "+repoName+" at "+repoDestination, nil)
 }

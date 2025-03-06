@@ -4,7 +4,7 @@ import (
 	"log"
 )
 
-func LogPrint(debug bool, message string, err error) {
+func Print(debug bool, message string, err error) {
 	if debug {
 		if err != nil {
 			log.Printf("gogitlabber | DEBUG: %v error: %v\n", message, err)
@@ -15,7 +15,7 @@ func LogPrint(debug bool, message string, err error) {
 	}
 }
 
-func LogFatal(message string, err error) {
+func Fatal(message string, err error) {
 	if err != nil {
 		log.Fatalf("gogitlabber | FATAL: %v error: %v\n", message, err)
 	}

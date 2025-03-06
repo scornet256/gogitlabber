@@ -34,9 +34,9 @@ func main() {
 	// check for git
 	err := verifyGitAvailable()
 	if err != nil {
-		logging.LogFatal("git not found in path: %v", err)
+		logging.Fatal("git not found in path: %v", err)
 	}
-	logging.LogPrint(debug, "VALIDATION: git found in path", nil)
+	logging.Print(debug, "VALIDATION: git found in path", nil)
 
 	// make initial progressbar
 	if !debug {
@@ -47,7 +47,7 @@ func main() {
 	// fetch repository information from gitlab
 	repositories, err := fetchRepositoriesGitlab()
 	if err != nil {
-		logging.LogFatal("FATAL: %v", err)
+		logging.Fatal("FATAL: %v", err)
 	}
 
 	// manage found repositories

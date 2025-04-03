@@ -17,10 +17,10 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 
 	// configure archived options
 	var archived string
-	switch {
-	case includeArchived == "excluded":
+	switch includeArchived {
+	case "excluded":
 		archived = "&archived=false"
-	case includeArchived == "only":
+	case "only":
 		archived = "&archived=true"
 	default:
 		archived = ""
@@ -32,7 +32,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	logger.Print("HTTP: Creating API request", nil)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("ERROR: creating request: %v\n", err)
+		return nil, fmt.Errorf("ERROR: creating request: %v", err)
 	}
 
 	logger.Print("HTTP: Adding PRIVATE-TOKEN header to API request", nil)
@@ -42,12 +42,16 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("ERROR: making request: %v\n", err)
+		return nil, fmt.Errorf("ERROR: making request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Fatal("HTTP: Error closing response body", err)
+		}
+	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("ERROR: API request failed with status: %d\n", resp.StatusCode)
+		return nil, fmt.Errorf("ERROR: API request failed with status: %d", resp.StatusCode)
 	}
 
 	logger.Print("HTTP: Decoding JSON response", nil)

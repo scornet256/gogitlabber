@@ -28,5 +28,7 @@ releasing:
     # run only if scheduled with this name
     - if: '$SCHEDULE_NAME == "release"'
     - when: "never"
+  variables:
+    GITLAB_TOKEN: '$GORELEASER_GITLAB_TOKEN'
   script:
-    - 'GITLAB_TOKEN=${GORELEASER_GITLAB_TOKEN} goreleaser release --clean'
+    - "goreleaser release --clean"

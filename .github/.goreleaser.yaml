@@ -34,15 +34,14 @@ builds:
 changelog:
   use: "git"
   sort: "desc"
-  filters:
-    exclude:
-      - "^chore"
-      - "^ci"
-      - "^docs"
   groups:
     - title: "🚀 Features"
       regexp: "^feat"
     - title: "🐛 Bug Fixes"
       regexp: "^fix"
-    - title: "🛠 Maintenance"
+    - title: "🛠️ Maintenance"
       regexp: "^(chore|refactor)"
+    - title: "🦾 Automation"
+      regexp: "^ci"
+    - title: "📖 Documentation"
+      regexp: "^docs"

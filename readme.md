@@ -1,7 +1,10 @@
-# gogitlabber
+# GoGitlabber
 
 This project is inspired from the python application called gitlabber (https://github.com/ezbz/gitlabber).
-It is mainly to learn Golang. But also to make something that specifically solves my problem. :)
+It is mainly to learn Golang. But also to make something that specifically
+solves my problem. :)
+
+It is definitely not as feature-rich as the original project... :)
 
 The program can clone and pull all repositories you have access to on a selfhosted or SaaS provided Gitlab server.
 It only supports the HTTP access method.

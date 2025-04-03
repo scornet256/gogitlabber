@@ -2,7 +2,7 @@ image: "golang:alpine"
 stages:
   - "linter"
   - "testing"
-  - "build"
+  - "release"
 
 linter:
   stage: "linter"
@@ -18,22 +18,10 @@ testing:
   script:
     - "go test cmd/gogitlabber/*.go"
 
-build:
-  stage: "build"
-  needs:
-    - "testing"
-  image: "cr.simoncor.net/siempie/go-build:latest"
-  script:
-    - "GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o gogitlabber cmd/gogitlabber/*.go"
-  artifacts:
-    name: "${CI_PROJECT_NAME}"
-    paths:
-      - "gogitlabber"
-
 release:
   stage: "release"
   needs:
-    - "build"
+    - "testing"
   image:
     name: "goreleaser/goreleaser:v2.8.2"
     entrypoint: [""]

@@ -30,4 +30,4 @@ releasing:
     - when: "never"
   script:
     - export GITLAB_TOKEN="$GORELEASER_GITLAB_TOKEN"
-    - "goreleaser release --rm-dist --changelog=changelog.md"
+    - "goreleaser release --clean --changelog=changelog.md"

@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213
 	github.com/schollz/progressbar/v3 v3.18.0
-	github.com/scornet256/go-logger v0.0.0-20250306113004-0062c214ab34
+	github.com/scornet256/go-logger v0.0.2
 )
 
 require (

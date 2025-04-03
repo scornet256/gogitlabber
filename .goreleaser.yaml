@@ -50,4 +50,5 @@ changelog:
 # gitlab
 gitlab_urls:
   api: "https://gitlab.simoncor.net/api/v4/"
-  use_package_registry: false
+  download: "https://gitlab.simoncor.net"
+  use_package_registry: true

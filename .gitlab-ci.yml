@@ -1,7 +1,7 @@
 stages:
   - "linter"
   - "testing"
-  - "release"
+  - "releasing"
 
 linter:
   stage: "linter"
@@ -17,8 +17,8 @@ testing:
   script:
     - "go test cmd/gogitlabber/*.go"
 
-release:
-  stage: "release"
+releasing:
+  stage: "releasing"
   needs:
     - "testing"
   image:

@@ -36,14 +36,14 @@ changelog:
   sort: "desc"
   filters:
     exclude:
-      - "^chore(?:\\([^)]+\\))?:"
-      - "^ci(?:\\([^)]+\\))?:"
-      - "^docs(?:\\([^)]+\\))?:"
+      - "^chore"
+      - "^ci"
+      - "^docs"
   groups:
     - title: "🚀 Features"
-      regexp: "^feat(?:\\([^)]+\\))?:"
+      regexp: "^feat"
     - title: "🐛 Bug Fixes"
-      regexp: "^fix(?:\\([^)]+\\))?:"
+      regexp: "^fix"
     - title: "🛠 Maintenance"
       regexp: "^(chore|refactor)"
 

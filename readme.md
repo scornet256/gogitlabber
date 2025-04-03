@@ -6,6 +6,17 @@ It is mainly to learn Golang. But also to make something that specifically solve
 The program can clone and pull all repositories you have access to on a selfhosted or SaaS provided Gitlab server.
 It only supports the HTTP access method.
 
+It will pull the repositories in a tree like structure same as on Gitlab.
+root [http://gitlab.example.com]
+├── group1 [/group1]
+│   └── subgroup1 [/group1/subgroup1]
+│       └── project1 [/group1/subgroup1/project1]
+└── group2 [/group2]
+    ├── subgroup1 [/group2/subgroup1]
+    │   └── project2 [/group2/subgroup1/project2]
+    ├── subgroup2 [/group2/subgroup2]
+    └── subgroup3 [/group2/subgroup3]
+
 # Usage
 
 ```
@@ -32,17 +43,17 @@ Usage of gogitlabber:
         Specify where to check the repositories out
           example: -destination=$HOME/repos
         env = GOGITLABBER_DESTINATION
-         (default "/home/simon/Documents/siempie")
+         (default "$HOME/Documents")
 
   -gitlab-api-token string
         Specify GitLab API token
           example: -gitlab-api=glpat-xxxx
         env = GITLAB_API_TOKEN
-         (default "glpat-QsUyRLKF3wPb1Ny7MLjy")
+         (default "")
 
   -gitlab-url string
         Specify GitLab host
-          example: -gitlab-url=gitlab.com
+          example: -gitlab-url=gitlab.example.com
         env = GITLAB_URL
-         (default "gitlab.simoncor.net")
+         (default "gitlab.com")
 ```

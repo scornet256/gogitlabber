@@ -7,6 +7,7 @@ The program can clone and pull all repositories you have access to on a selfhost
 It only supports the HTTP access method.
 
 It will pull the repositories in a tree like structure same as on Gitlab.
+```
 root [http://gitlab.example.com]
 ├── group1 [/group1]
 │   └── subgroup1 [/group1/subgroup1]
@@ -16,6 +17,7 @@ root [http://gitlab.example.com]
     │   └── project2 [/group2/subgroup1/project2]
     ├── subgroup2 [/group2/subgroup2]
     └── subgroup3 [/group2/subgroup3]
+```
 
 # Usage
 

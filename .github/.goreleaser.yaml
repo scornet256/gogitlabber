@@ -1,0 +1,48 @@
+---
+version: 2
+
+# before
+before:
+  hooks:
+    - "go mod tidy"
+    - "go generate ./..."
+
+# archives
+archives:
+  - formats: ["tar.gz"]
+    name_template: "{{.ProjectName}}-v{{.Version}}-{{ .Os }}-{{ .Arch }}"
+    format_overrides:
+      - goos: "windows"
+        formats: ["zip"]
+
+# build
+builds:
+  - id: "gogitlabber"
+    binary: "gogitlabber"
+    main: "./cmd/gogitlabber"
+    env:
+      - "CGO_ENABLED=0"
+    goarch:
+      - "amd64"
+      - "arm64"
+    goos:
+      - "linux"
+      - "windows"
+      - "darwin"
+
+# changelog
+changelog:
+  use: "git"
+  sort: "desc"
+  filters:
+    exclude:
+      - "^chore(?:\\([^)]+\\))?:"
+      - "^ci(?:\\([^)]+\\))?:"
+      - "^docs(?:\\([^)]+\\))?:"
+  groups:
+    - title: "🚀 Features"
+      regexp: "^feat(?:\\([^)]+\\))?:"
+    - title: "🐛 Bug Fixes"
+      regexp: "^fix(?:\\([^)]+\\))?:"
+    - title: "🛠 Maintenance"
+      regexp: "^(chore|refactor)"

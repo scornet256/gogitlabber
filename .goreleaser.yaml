@@ -7,6 +7,14 @@ before:
     - "go mod tidy"
     - "go generate ./..."
 
+# archives
+archives:
+  - formats: ["tar.gz"]
+    name_template: "{{.ProjectName}}-v{{.Version}}-{{ .Os }}-{{ .Arch }}"
+    format_overrides:
+      - goos: "windows"
+        formats: ["zip"]
+
 # build
 builds:
   - id: "gogitlabber"
@@ -21,14 +29,6 @@ builds:
       - "linux"
       - "windows"
       - "darwin"
-
-# archives
-archives:
-  - formats: ["tar.gz"]
-    name_template: "{{.ProjectName}}-v{{.Version}}-{{ .Os }}-{{ .Arch }}"
-    format_overrides:
-      - goos: "windows"
-        formats: ["zip"]
 
 # changelog
 changelog:
@@ -46,3 +46,8 @@ changelog:
       regexp: "^fix(?:\\([^)]+\\))?:"
     - title: "🛠 Maintenance"
       regexp: "^(chore|refactor)"
+
+# gitlab
+gitlab_urls:
+  api: "https://gitlab.simoncor.net/api/v4/"
+  use_package_registry: false

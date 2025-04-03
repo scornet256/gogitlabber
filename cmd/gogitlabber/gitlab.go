@@ -57,11 +57,11 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	logger.Print("HTTP: Decoding JSON response", nil)
 	var repositories []Repository
 	if err := json.NewDecoder(resp.Body).Decode(&repositories); err != nil {
-		return nil, fmt.Errorf("ERROR: decoding response: %v\n", err)
+		return nil, fmt.Errorf("ERROR: decoding response: %v", err)
 	}
 
 	if len(repositories) < 1 {
-		return repositories, fmt.Errorf("ERROR: no repositories found\n")
+		return repositories, fmt.Errorf("ERROR: no repositories found")
 	}
 
 	repoCount := len(repositories)

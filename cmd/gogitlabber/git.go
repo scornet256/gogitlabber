@@ -127,7 +127,7 @@ func pullRepository(repoName string, repoDestination string) {
 		remoteCmd := exec.Command("git", "-C", repoDestination, "remote", "show")
 		remoteOutput, err := remoteCmd.CombinedOutput()
 		if err != nil {
-			return "", fmt.Errorf("finding remote: %v\n", err)
+			return "", fmt.Errorf("finding remote: %v", err)
 		}
 
 		logger.Print("Finding remote for repository: "+repoName+" at "+repoDestination, nil)

@@ -26,9 +26,10 @@ builds:
       - "amd64"
       - "arm64"
     goos:
+      - "darwin"
+      - "freebsd"
       - "linux"
       - "windows"
-      - "darwin"
 
 # changelog
 changelog:

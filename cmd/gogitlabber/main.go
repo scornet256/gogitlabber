@@ -4,6 +4,9 @@ import (
 	"github.com/scornet256/go-logger"
 )
 
+// version
+var version string
+
 // userdata
 var concurrency int
 var debug bool
@@ -25,6 +28,9 @@ type Repository struct {
 }
 
 func main() {
+
+	// set app version
+	version = "0.0.7"
 
 	// set appname for logger
 	logger.SetAppName("gogitlabber")

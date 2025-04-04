@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -95,7 +96,15 @@ func manageArguments() {
 		debug,
 		"Toggle debug mode\n  example: -debug=true\nenv = GOGITLABBER_DEBUG\n")
 
+	versionFlag := flag.Bool("version", false, "Print the version and exit")
+
 	flag.Parse()
+
+	// print version
+	if *versionFlag {
+		fmt.Println(version)
+		os.Exit(0)
+	}
 
 	// override with flag values (higher precedence)
 	concurrency = *concurrencyFlag

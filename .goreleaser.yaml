@@ -3,7 +3,7 @@ version: 2
 
 # release information
 release:
-  name_template: "GoGitlabber {{ .Version }}"
+  name_template: "GoGitlabber - {{ .Version }}"
 
 # before
 before:

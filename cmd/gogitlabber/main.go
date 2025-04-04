@@ -30,7 +30,7 @@ type Repository struct {
 func main() {
 
 	// set app version
-	version = "0.0.8"
+	version = "0.0.9"
 
 	// set appname for logger
 	logger.SetAppName("gogitlabber")

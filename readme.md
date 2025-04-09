@@ -9,7 +9,8 @@ It is definitely not as feature-rich as the original project... 😬
 The program can clone and pull all repositories you have access to on a selfhosted or SaaS provided Gitlab or Gitea server.
 It only supports the HTTP access method.
 
-It will pull the repositories in a tree like structure same as on Gitlab.
+It will pull the repositories in a tree like structure same as on Gitlab or
+Gitea.
 ```
 root [http://gitlab.example.com]
 ├── group1 [/group1]

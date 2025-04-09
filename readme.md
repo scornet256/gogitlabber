@@ -67,3 +67,11 @@ Usage of gogitlabber:
         env = GIT_URL
          (default "gitlab.com")
 ```
+
+# Gitea
+Make sure the Gitea Access Token has at least the following permissions:
+- user - read
+- repository - read
+
+# Gitlab
+Make sure the Gitlab Access Token has the `api` scope.

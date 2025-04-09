@@ -28,11 +28,21 @@ Gitea:
 ```
 gogitlabber -backend=gitea -destination=$HOME/Documents -git-url=gitea.example.com
 -git-api-token=supersecrettoken
+ 100% [====================] (30/30) Pulling repository username/reponame ...                         
+Summary:
+ Cloned repositories: 0
+ Pulled repositories: 30
+ Errors: 0
 ```
 Gitlab:
 ```
 gogitlabber -backend=gitlab -destination=$HOME/Documents -git-url=gitlab.example.com
 -git-api-token=supersecrettoken
+ 100% [====================] (30/30) Pulling repository username/reponame ...                         
+Summary:
+ Cloned repositories: 0
+ Pulled repositories: 30
+ Errors: 0
 ```
 
 # Usage
@@ -80,10 +90,11 @@ Usage of gogitlabber:
          (default "gitlab.com")
 ```
 
-# Gitea
+# Access Token Permissions
+## Gitea
 Make sure the Gitea Access Token has at least the following permissions:
 - user - read
 - repository - read
 
-# Gitlab
+## Gitlab
 Make sure the Gitlab Access Token has the `api` scope.

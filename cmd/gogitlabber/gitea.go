@@ -8,12 +8,17 @@ import (
 	"github.com/scornet256/go-logger"
 )
 
-func fetchRepositoriesGitlab() ([]Repository, error) {
+func fetchRepositoriesGitea() ([]Repository, error) {
+
+	type GiteaRepository struct {
+		Name     string `json:"name"`
+		FullName string `json:"full_name"`
+	}
 
 	// default options
-	membership := "membership=true"
-	perpage := "per_page=100"
-	order := "order_by=name"
+	visibility := "visibility=all"
+	perpage := "limit=100"
+	sort := "sort=alpha"
 
 	// configure archived options
 	var archived string
@@ -26,8 +31,8 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 		archived = ""
 	}
 
-	url := fmt.Sprintf("https://%s/api/v4/projects?%s&%s&%s%s",
-		gitHost, membership, order, perpage, archived)
+	url := fmt.Sprintf("https://%s/api/v1/user/repos?%s&%s&%s%s",
+		gitHost, visibility, sort, perpage, archived)
 
 	logger.Print("HTTP: Creating API request", nil)
 	req, err := http.NewRequest("GET", url, nil)
@@ -35,8 +40,8 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 		return nil, fmt.Errorf("ERROR: creating request: %v", err)
 	}
 
-	logger.Print("HTTP: Adding PRIVATE-TOKEN header to API request", nil)
-	req.Header.Set("PRIVATE-TOKEN", gitToken)
+	logger.Print("HTTP: Adding Authorization header to API request", nil)
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", gitToken))
 
 	logger.Print("HTTP: Making request", nil)
 	client := &http.Client{}
@@ -44,6 +49,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	if err != nil {
 		return nil, fmt.Errorf("ERROR: making request: %v", err)
 	}
+
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
 			logger.Fatal("HTTP: Error closing response body", err)
@@ -53,17 +59,26 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("ERROR: API request failed with status: %d", resp.StatusCode)
 	}
-
 	logger.Print("HTTP: Decoding JSON response", nil)
-	var repositories []Repository
-	if err := json.NewDecoder(resp.Body).Decode(&repositories); err != nil {
+
+	// first decode into gitearepository slice
+	var giteaRepos []GiteaRepository
+	if err := json.NewDecoder(resp.Body).Decode(&giteaRepos); err != nil {
 		return nil, fmt.Errorf("ERROR: decoding response: %v", err)
+	}
+
+	// convert to repository slice
+	repositories := make([]Repository, len(giteaRepos))
+	for repo, giteaRepo := range giteaRepos {
+		repositories[repo] = Repository{
+			Name:              giteaRepo.Name,
+			PathWithNamespace: giteaRepo.FullName,
+		}
 	}
 
 	if len(repositories) < 1 {
 		return repositories, fmt.Errorf("ERROR: no repositories found")
 	}
-
 	repoCount := len(repositories)
 
 	logger.Print("BAR: Resetting the progressbar", nil)

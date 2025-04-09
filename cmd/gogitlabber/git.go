@@ -41,8 +41,8 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			// log activity
 			logger.Print("Starting on repository: "+repoName, nil)
 
-			// make gitlab url
-			url := fmt.Sprintf("https://gitlab-token:%s@%s/%s.git", gitlabToken, gitlabHost, repoName)
+			// make git url
+			url := fmt.Sprintf("https://%s-token:%s@%s/%s.git", gitBackend, gitToken, gitHost, repoName)
 
 			// check current status of repoDestination
 			checkRepo := func(repoDestination string) string {

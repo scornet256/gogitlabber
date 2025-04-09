@@ -10,10 +10,13 @@ var version string
 // userdata
 var concurrency int
 var debug bool
-var gitlabHost string
-var gitlabToken string
 var includeArchived string
 var repoDestinationPre string
+
+// git
+var gitHost string
+var gitToken string
+var gitBackend string
 
 // keep count 🧛
 var clonedCount int
@@ -30,7 +33,7 @@ type Repository struct {
 func main() {
 
 	// set app version
-	version = "0.0.9"
+	version = "1.0.0"
 
 	// set appname for logger
 	logger.SetAppName("gogitlabber")
@@ -53,9 +56,20 @@ func main() {
 		progressBar()
 	}
 
-	// fetch repository information from gitlab
-	repositories, err := fetchRepositoriesGitlab()
-	if err != nil {
+	// fetch repository information
+	var repositories []Repository
+	switch gitBackend {
+	case "gitea":
+		repositories, err = fetchRepositoriesGitea()
+		if err != nil {
+			logger.Fatal("Fetching repositories failed", err)
+		}
+	case "gitlab":
+		repositories, err = fetchRepositoriesGitlab()
+		if err != nil {
+			logger.Fatal("Fetching repositories failed", err)
+		}
+	default:
 		logger.Fatal("Fetching repositories failed", err)
 	}
 

@@ -6,7 +6,7 @@ solves my problem. 😆
 
 It is definitely not as feature-rich as the original project... 😬
 
-The program can clone and pull all repositories you have access to on a selfhosted or SaaS provided Gitlab server.
+The program can clone and pull all repositories you have access to on a selfhosted or SaaS provided Gitlab or Gitea server.
 It only supports the HTTP access method.
 
 It will pull the repositories in a tree like structure same as on Gitlab.
@@ -32,6 +32,11 @@ Usage of gogitlabber:
         env = GOGITLABBER_ARCHIVED
          (default "excluded")
 
+  -backend string
+        Specify git backend
+          example: -backend=gitlab
+        env = GOGITLABBER_BACKEND
+
   -concurrency int
         Specify repository concurrency
           example: -concurrency=15
@@ -50,15 +55,15 @@ Usage of gogitlabber:
         env = GOGITLABBER_DESTINATION
          (default "$HOME/Documents")
 
-  -gitlab-api-token string
-        Specify GitLab API token
-          example: -gitlab-api=glpat-xxxx
-        env = GITLAB_API_TOKEN
+  -git-api-token string
+        Specify API token
+          example: -git-api=glpat-xxxx
+        env = GIT_API_TOKEN
          (default "")
 
-  -gitlab-url string
-        Specify GitLab host
-          example: -gitlab-url=gitlab.example.com
-        env = GITLAB_URL
+  -git-url string
+        Specify Git host
+          example: -git-url=gitlab.example.com
+        env = GIT_URL
          (default "gitlab.com")
 ```

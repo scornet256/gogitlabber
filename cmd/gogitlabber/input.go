@@ -16,8 +16,8 @@ func setDefaultsFromEnv() {
 	// set default values
 	debug = false
 	concurrency = 15
-	gitlabHost = "gitlab.com"
-	gitlabToken = ""
+	gitHost = "gitlab.com"
+	gitToken = ""
 	includeArchived = "excluded"
 	repoDestinationPre = "$HOME/Documents"
 
@@ -30,12 +30,16 @@ func setDefaultsFromEnv() {
 		}
 	}
 
-	if envToken := os.Getenv("GITLAB_API_TOKEN"); envToken != "" {
-		gitlabToken = envToken
+	if envBackend := os.Getenv("GOGITLABBER_BACKEND"); envBackend != "" {
+		gitBackend = envBackend
 	}
 
-	if envHost := os.Getenv("GITLAB_URL"); envHost != "" {
-		gitlabHost = envHost
+	if envToken := os.Getenv("GIT_API_TOKEN"); envToken != "" {
+		gitToken = envToken
+	}
+
+	if envHost := os.Getenv("GIT_URL"); envHost != "" {
+		gitHost = envHost
 	}
 
 	if envRepoDest := os.Getenv("GOGITLABBER_DESTINATION"); envRepoDest != "" {
@@ -81,15 +85,20 @@ func manageArguments() {
 		repoDestinationPre,
 		"Specify where to check the repositories out\n  example: -destination=$HOME/repos\nenv = GOGITLABBER_DESTINATION\n")
 
+	var backendFlag = flag.String(
+		"backend",
+		gitBackend,
+		"Specify git backend\n  example -backend=gitlab\nenv = GOGITLABBER_BACKEND\n")
+
 	var hostFlag = flag.String(
-		"gitlab-url",
-		gitlabHost,
-		"Specify GitLab host\n  example: -gitlab-url=gitlab.com\nenv = GITLAB_URL\n")
+		"git-url",
+		gitHost,
+		"Specify GitLab/Gitea host\n  example: -git-url=gitlab.com\nenv = GIT_URL\n")
 
 	var tokenFlag = flag.String(
-		"gitlab-api-token",
-		gitlabToken,
-		"Specify GitLab API token\n  example: -gitlab-api=glpat-xxxx\nenv = GITLAB_API_TOKEN\n")
+		"git-api-token",
+		gitToken,
+		"Specify GitLab/Gitea API token\n  example: -git-api=glpat-xxxx\nenv = GIT_API_TOKEN\n")
 
 	var debugFlag = flag.Bool(
 		"debug",
@@ -109,8 +118,9 @@ func manageArguments() {
 	// override with flag values (higher precedence)
 	concurrency = *concurrencyFlag
 	debug = *debugFlag
-	gitlabHost = *hostFlag
-	gitlabToken = *tokenFlag
+	gitHost = *hostFlag
+	gitToken = *tokenFlag
+	gitBackend = *backendFlag
 	includeArchived = *archivedFlag
 	repoDestinationPre = *destinationFlag
 
@@ -120,9 +130,9 @@ func manageArguments() {
 	}
 
 	// validate required parameters
-	if gitlabToken == "" {
+	if gitToken == "" {
 		flag.Usage()
-		logger.Fatal("Configuration: Gitlab API Token not found", nil)
+		logger.Fatal("Configuration: API Token not found", nil)
 	}
 
 	// validate archived option
@@ -134,7 +144,7 @@ func manageArguments() {
 	}
 
 	// log configuration
-	logger.Print("Configuration: Using GitLab host: "+gitlabHost, nil)
+	logger.Print("Configuration: Using host: "+gitHost, nil)
 	logger.Print("Configuration: Using destination: "+repoDestinationPre, nil)
 	logger.Print("Configuration: Using concurrency: "+strconv.Itoa(concurrency), nil)
 	logger.Print("Configuration: Using archived option: "+includeArchived, nil)

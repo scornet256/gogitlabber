@@ -15,7 +15,7 @@ func progressBar() {
 	// configure progressbar
 	bar = progressbar.NewOptions(2,
 		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionSetDescription("Logging into Gitlab..."),
+		progressbar.OptionSetDescription("Logging into Git..."),
 		progressbar.OptionSetElapsedTime(false),
 		progressbar.OptionSetPredictTime(false),
 		progressbar.OptionSetWidth(20),

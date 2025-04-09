@@ -22,8 +22,19 @@ root [http://gitlab.example.com]
     └── subgroup3 [/group2/subgroup3]
 ```
 
-# Usage
+# Example
+Gitea:
+```
+gogitlabber -backend=gitea -destination=$HOME/Documents -git-url=gitea.example.com
+-git-api-token=supersecrettoken
+```
+Gitlab:
+```
+gogitlabber -backend=gitlab -destination=$HOME/Documents -git-url=gitlab.example.com
+-git-api-token=supersecrettoken
+```
 
+# Usage
 ```
 Usage of gogitlabber:
   -archived string

@@ -26,7 +26,7 @@ root [http://gitlab.example.com]
 # Example
 Gitea:
 ```
-gogitlabber -backend=gitea -destination=$HOME/Documents -git-url=gitea.example.com
+$ ./gogitlabber -backend=gitea -destination=$HOME/Documents -git-url=gitea.example.com
 -git-api-token=supersecrettoken
  100% [====================] (30/30) Pulling repository username/reponame ...                         
 Summary:
@@ -36,7 +36,7 @@ Summary:
 ```
 Gitlab:
 ```
-gogitlabber -backend=gitlab -destination=$HOME/Documents -git-url=gitlab.example.com
+$ ./gogitlabber -backend=gitlab -destination=$HOME/Documents -git-url=gitlab.example.com
 -git-api-token=supersecrettoken
  100% [====================] (30/30) Pulling repository username/reponame ...                         
 Summary:

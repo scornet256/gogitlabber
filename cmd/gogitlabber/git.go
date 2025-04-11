@@ -149,8 +149,12 @@ func pullRepository(repoName string, repoDestination string) {
 
 		switch {
 		case strings.Contains(string(pullOutput), "You have unstaged changes"):
-			pullErrorMsg = append(pullErrorMsg, repoDestination)
-			logger.Print("Found unstaged changes for repository: "+repoName+" at "+repoDestination, nil)
+			pullErrorMsgUnstaged = append(pullErrorMsgUnstaged, repoDestination)
+			logger.Print("Found unstaged changes in repository: "+repoName+" at "+repoDestination, nil)
+
+		case strings.Contains(string(pullOutput), "Your index contains uncommitted changes"):
+			pullErrorMsgUncommitted = append(pullErrorMsgUncommitted, repoDestination)
+			logger.Print("Found uncommitted changes in repository: "+repoName+" at "+repoDestination, nil)
 
 		default:
 			logger.Print("ERROR: pulling "+repoName, nil)

@@ -49,10 +49,18 @@ func printSummary() {
 	)
 }
 
-func printPullError(pullErrorMsg []string) {
-	if len(pullErrorMsg) > 0 {
-		for _, repo := range pullErrorMsg {
+func printPullErrorUnstaged(pullErrorMsgUnstaged []string) {
+	if len(pullErrorMsgUnstaged) > 0 {
+		for _, repo := range pullErrorMsgUnstaged {
 			fmt.Printf("❕%s has unstaged changes.\n", repo)
+		}
+	}
+}
+
+func printPullErrorUncommitted(pullErrorMsgUncommitted []string) {
+	if len(pullErrorMsgUncommitted) > 0 {
+		for _, repo := range pullErrorMsgUncommitted {
+			fmt.Printf("❕%s has uncommitted changes.\n", repo)
 		}
 	}
 }

@@ -22,7 +22,8 @@ var gitBackend string
 var clonedCount int
 var errorCount int
 var pulledCount int
-var pullErrorMsg []string
+var pullErrorMsgUnstaged []string
+var pullErrorMsgUncommitted []string
 
 // repository data
 type Repository struct {
@@ -76,5 +77,6 @@ func main() {
 	// manage found repositories
 	checkoutRepositories(repositories, concurrency)
 	printSummary()
-	printPullError(pullErrorMsg)
+	printPullErrorUnstaged(pullErrorMsgUnstaged)
+	printPullErrorUncommitted(pullErrorMsgUncommitted)
 }

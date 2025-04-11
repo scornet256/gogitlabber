@@ -13,15 +13,16 @@ var bar *progressbar.ProgressBar
 func progressBar() {
 
 	// configure progressbar
-	bar = progressbar.NewOptions(2,
+	bar = progressbar.NewOptions(100,
 		progressbar.OptionEnableColorCodes(true),
-		progressbar.OptionSetDescription("Logging into Git..."),
+		progressbar.OptionSetDescription("..."),
 		progressbar.OptionSetElapsedTime(false),
 		progressbar.OptionSetPredictTime(false),
 		progressbar.OptionSetWidth(20),
 		progressbar.OptionSetWriter(ansi.NewAnsiStdout()),
 		progressbar.OptionShowCount(),
 		progressbar.OptionShowDescriptionAtLineEnd(),
+		progressbar.OptionShowElapsedTimeOnFinish(),
 		progressbar.OptionSetTheme(progressbar.Theme{
 			Saucer:        "[green]=[reset]",
 			SaucerHead:    "[green]>[reset]",
@@ -31,20 +32,7 @@ func progressBar() {
 		}),
 	)
 
-	// initialize progressbar
 	logger.Print("Initialize progressbar", nil)
-	err := bar.RenderBlank()
-	progressBarAdd(1)
-	if err != nil {
-		logger.Fatal("Initialization of the progressbar failed", err)
-	}
-}
-
-func progressBarAdd(amount int) {
-	logger.Print("BAR: Progressing the bar", nil)
-	if err := bar.Add(amount); err != nil {
-		logger.Print("BAR: Could not update the bar", err)
-	}
 }
 
 func printSummary() {

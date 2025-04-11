@@ -79,11 +79,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				mu.Lock()
 				clonedCount++
 				if !debug {
-					// update the progress bar
-					descriptionPrefixPre := "Cloning repository "
-					descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-					bar.Describe(descriptionPrefix)
-					progressBarAdd(1)
+					bar.Add(1)
 				}
 				mu.Unlock()
 
@@ -92,10 +88,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				logger.Print("Decided to pull repository: "+repoName, nil)
 				pullRepository(repoName, repoDestination)
 				if !debug {
-					descriptionPrefixPre := "Pulling repository "
-					descriptionPrefix := descriptionPrefixPre + repoName + " ..."
-					bar.Describe(descriptionPrefix)
-					progressBarAdd(1)
+					bar.Add(1)
 				}
 
 			default:
@@ -106,7 +99,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				mu.Lock()
 				errorCount++
 				if !debug {
-					progressBarAdd(1)
+					bar.Add(1)
 				}
 				mu.Unlock()
 			}

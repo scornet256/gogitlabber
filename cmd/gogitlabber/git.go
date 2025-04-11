@@ -79,7 +79,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				mu.Lock()
 				clonedCount++
 				if !debug {
-					bar.Add(1)
+					_ = bar.Add(1)
 				}
 				mu.Unlock()
 
@@ -88,7 +88,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				logger.Print("Decided to pull repository: "+repoName, nil)
 				pullRepository(repoName, repoDestination)
 				if !debug {
-					bar.Add(1)
+					_ = bar.Add(1)
 				}
 
 			default:
@@ -99,7 +99,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				mu.Lock()
 				errorCount++
 				if !debug {
-					bar.Add(1)
+					_ = bar.Add(1)
 				}
 				mu.Unlock()
 			}

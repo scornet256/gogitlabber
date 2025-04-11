@@ -28,7 +28,7 @@ Gitea:
 ```
 $ ./gogitlabber -backend=gitea -destination=$HOME/Documents -git-url=gitea.example.com
 -git-api-token=supersecrettoken
- 100% [====================] (30/30) Pulling repository username/reponame ...                         
+ 100% [====================] (30/30) [4s] ...   
 Summary:
  Cloned repositories: 0
  Pulled repositories: 30
@@ -38,7 +38,7 @@ Gitlab:
 ```
 $ ./gogitlabber -backend=gitlab -destination=$HOME/Documents -git-url=gitlab.example.com
 -git-api-token=supersecrettoken
- 100% [====================] (30/30) Pulling repository username/reponame ...                         
+ 100% [====================] (30/30) [4s] ...   
 Summary:
  Cloned repositories: 0
  Pulled repositories: 30

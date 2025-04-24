@@ -42,15 +42,15 @@ jobs:
         run: |
           APP_NAME="gogitlabber"
           VERSION=${GITHUB_REF#refs/tags/}
-          syft go.mod -o spdx-json=${APP_NAME}_${VERSION}_sbom.spdx.json
-          syft go.mod -o cyclonedx-json=${APP_NAME}_${VERSION}_sbom.cyclonedx.json
+          syft go.mod -o spdx-json=${APP_NAME}-${VERSION}-sbom.spdx.json
+          syft go.mod -o cyclonedx-json=${APP_NAME}-${VERSION}-sbom.cyclonedx.json
 
       # upload sbom to release
       - name: "upload sbom to release"
         uses: "softprops/action-gh-release@v1"
         with:
           files: |
-            gogitlabber_*_sbom.spdx.json
-            gogitlabber_*_sbom.cyclonedx.json
+            gogitlabber-*-sbom.spdx.json
+            gogitlabber-*-sbom.cyclonedx.json
         env:
           GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}

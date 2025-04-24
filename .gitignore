@@ -1,3 +1,4 @@
 /gogitlabber
-# Added by goreleaser init:
 dist/
+gogitlabber-*-sbom.spdx.json
+gogitlabber-*-sbom.cyclonedx.json

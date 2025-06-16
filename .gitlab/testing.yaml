@@ -2,6 +2,6 @@
 
 testing:
   stage: "testing"
-  image: "cr.simoncor.net/siempie/go-build:latest"
+  image: "cr.simoncor.net/siempie/go-build:v26.06.16"
   script:
-    - "go test cmd/gogitlabber/*.go"
+    - "go test ./..."

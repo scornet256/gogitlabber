@@ -2,8 +2,6 @@
 
 releasing:
   stage: "releasing"
-  needs:
-    - "testing"
   image:
     name: "goreleaser/goreleaser:v2.10.2"
     entrypoint: [""]

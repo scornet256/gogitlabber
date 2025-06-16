@@ -6,7 +6,7 @@ stages:
 testing:
   stage: "testing"
   needs:
-    - "linter"
+    - "linting"
   image: "cr.simoncor.net/siempie/go-build:latest"
   script:
     - "go test cmd/gogitlabber/*.go"

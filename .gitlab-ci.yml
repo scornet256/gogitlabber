@@ -10,6 +10,8 @@ include:
 
   # linting
   - component: "$CI_SERVER_FQDN/components/golanglint/golanglint@v1.0.0"
+    inputs:
+      stage: "linting"
 
 testing:
   stage: "testing"

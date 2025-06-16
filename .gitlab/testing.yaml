@@ -1,7 +1,0 @@
----
-
-testing:
-  stage: "testing"
-  image: "cr.simoncor.net/siempie/go-build:v25.06.03"
-  script:
-    - "go test ./..."

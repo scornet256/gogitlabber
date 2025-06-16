@@ -7,6 +7,6 @@ stages:
 
 # include jobs
 include:
-  - component: "$CI_SERVER_FQDN/components/golanglint/linting@v2.0.5"
-  - component: "$CI_SERVER_FQDN/components/golanglint/testing@v2.0.5"
-  - component: "$CI_SERVER_FQDN/components/golanglint/releasing@v2.0.5"
+  - component: "$CI_SERVER_FQDN/components/golang/linting@v2.0.5"
+  - component: "$CI_SERVER_FQDN/components/golang/testing@v2.0.5"
+  - component: "$CI_SERVER_FQDN/components/golang/releasing@v2.0.5"

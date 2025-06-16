@@ -5,6 +5,12 @@ stages:
   - "testing"
   - "releasing"
 
+# include jobs
+include:
+
+  # linting
+  - component: "$CI_SERVER_FQDN/components/golanglint/golanglint@v1.0.0"
+
 testing:
   stage: "testing"
   needs:
@@ -26,10 +32,3 @@ releasing:
     GITLAB_TOKEN: '$GORELEASER_GITLAB_TOKEN'
   script:
     - "goreleaser release --clean"
-
-
-# include jobs
-include:
-
-  # linting
-  - component: "$CI_SERVER_FQDN/components/golanglint/golanglint@v1.0.0"

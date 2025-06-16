@@ -1,13 +1,7 @@
 stages:
-  - "linter"
+  - "linting"
   - "testing"
   - "releasing"
-
-linter:
-  stage: "linter"
-  image: "golangci/golangci-lint:latest-alpine"
-  script:
-    - "golangci-lint run"
 
 testing:
   stage: "testing"
@@ -30,3 +24,10 @@ releasing:
     GITLAB_TOKEN: '$GORELEASER_GITLAB_TOKEN'
   script:
     - "goreleaser release --clean"
+
+
+# include jobs
+include:
+
+  # linting
+  - component: "$CI_SERVER_FQDN/components/golanglint/golanglint@v1.0.0"

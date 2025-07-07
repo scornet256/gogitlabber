@@ -133,7 +133,8 @@ func (conf *Config) logConfig(configPath string) {
 // manage arguments
 func manageArguments() *Config {
 
-	defaultConfigPath := "./$HOME./gogitlabber.yaml"
+	// default config path
+	defaultConfigPath := "./$HOME./.config/gogitlabber.yaml"
 
 	// Define only the config file flag
 	configFileFlag := flag.String(
@@ -142,8 +143,14 @@ func manageArguments() *Config {
 		"Specify config file path (YAML)\n  example: -config=./config/app.yaml")
 
 	versionFlag := flag.Bool("version", false, "Print the version and exit")
+	debugFlag := flag.Bool("debug", false, "Enable debug mode")
 
 	flag.Parse()
+
+	// override debug setting if flag is set
+	if *debugFlag {
+		config.Debug = true
+	}
 
 	if *versionFlag {
 		fmt.Println(version)

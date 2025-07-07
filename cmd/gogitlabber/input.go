@@ -45,17 +45,17 @@ func expandPath(path string) string {
 
 	// expand ~
 	if strings.HasPrefix(expanded, "~/") {
-		home, err := os.UserHomeDir()
+		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return expanded
 		}
-		expanded = filepath.Join(home, expanded[2:])
+		expanded = filepath.Join(homeDir, expanded[2:])
 	} else if expanded == "~" {
-		home, err := os.UserHomeDir()
+		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			return expanded
 		}
-		expanded = home
+		expanded = homeDir
 	}
 
 	return filepath.Clean(expanded)

@@ -19,6 +19,8 @@ type Config struct {
 	GitBackend      string `yaml:"git_backend"`
 	GitHost         string `yaml:"git_host"`
 	GitToken        string `yaml:"git_token"`
+	GitUserMail     string `yaml:"git_user_mail"`
+	GitUserName     string `yaml:"git_user_name"`
 	IncludeArchived string `yaml:"include_archived"`
 }
 
@@ -30,6 +32,8 @@ func (conf *Config) setDefaults() {
 	conf.GitBackend = ""
 	conf.GitHost = "gitlab.com"
 	conf.GitToken = ""
+	conf.GitUserMail = ""
+	conf.GitUserName = ""
 	conf.IncludeArchived = "excluded"
 }
 

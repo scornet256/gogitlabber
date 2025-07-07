@@ -29,22 +29,22 @@ GitLab:
 
 ```yaml
 # ~/.config/gogitlabber/gitlab.example.com.yaml
-debug: false
 concurrency: 15
-git_host: "gitlab.example.net"
-git_token: "glpat-"
-git_backend: "gitlab"
-include_archived: "excluded"
+debug: false
 destination: "$HOME/Documents"
+git_backend: "gitlab"
+git_host: "gitlab.example.com"
+git_token: "glpat-"
+git_user_mail: "john.doe@example.com"
+git_user_name: "John Doe"
+include_archived: "excluded"
 ```
-
 
 ## Usage
 
 ```bash
 gogitlabber -config=~/.config/gogitlabber/gitlab.example.com.yaml
 ```
-
 
 ## Access Token Permissions
 

@@ -66,6 +66,11 @@ func checkoutRepositories(repositories []Repository) {
 				cloneRepository := func(repoDestination string, url string) (string, error) {
 					cloneCmd := exec.Command("git", "clone", url, repoDestination)
 					cloneOutput, err := cloneCmd.CombinedOutput()
+
+					// set username and email
+					setGitUserName(repoName, repoDestination)
+					setGitUserMail(repoName, repoDestination)
+
 					logger.Print("Cloning repository: "+repoName+" to "+repoDestination, nil)
 
 					return string(cloneOutput), err
@@ -87,6 +92,11 @@ func checkoutRepositories(repositories []Repository) {
 			case strings.Contains(string(repoStatus), url):
 				logger.Print("Decided to pull repository: "+repoName, nil)
 				pullRepository(repoName, repoDestination)
+
+				// set username and email
+				setGitUserName(repoName, repoDestination)
+				setGitUserMail(repoName, repoDestination)
+
 				if !config.Debug {
 					_ = bar.Add(1)
 				}
@@ -163,4 +173,24 @@ func pullRepository(repoName string, repoDestination string) {
 
 	// log activity
 	logger.Print("Pulled repository: "+repoName+" at "+repoDestination, nil)
+}
+
+// function to set the git user name
+func setGitUserName(repoName string, repoDestination string) error {
+
+	gitUserNameCmd := exec.Command("git", "-C", repoDestination, "config", "user.name", config.GitUserName)
+	_, err := gitUserNameCmd.CombinedOutput()
+
+	logger.Print("Setting git username for: "+repoName, nil)
+	return err
+}
+
+// function to set the git user mail
+func setGitUserMail(repoName string, repoDestination string) error {
+
+	gitUserMailCmd := exec.Command("git", "-C", repoDestination, "config", "user.mail", config.GitUserMail)
+	_, err := gitUserMailCmd.CombinedOutput()
+
+	logger.Print("Setting git email for: "+repoName, nil)
+	return err
 }

@@ -3,198 +3,291 @@ package main
 import (
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/scornet256/go-logger"
 )
 
-// add a mutex to safely increment shared counters
-var mu sync.Mutex
+// collect git operations results
+type GitOperationResult struct {
+	RepoName  string
+	Operation string
+	Error     error
+	ErrorType string
+}
 
-func checkoutRepositories(repositories []Repository) {
+// collect git stats
+type GitStats struct {
+	mu                      sync.Mutex
+	clonedCount             int
+	pulledCount             int
+	errorCount              int
+	pullErrorMsgUnstaged    []string
+	pullErrorMsgUncommitted []string
+}
 
-	// create a waitgroup + semaphore channel
+// increment counters
+func (stats *GitStats) IncrementCounter(operation string, repoPath string) {
+
+	stats.mu.Lock()
+	defer stats.mu.Unlock()
+
+	switch operation {
+	case "cloned":
+		stats.clonedCount++
+	case "pulled":
+		stats.pulledCount++
+	case "error":
+		stats.errorCount++
+	case "unstaged":
+		stats.errorCount++
+		stats.pullErrorMsgUnstaged = append(stats.pullErrorMsgUnstaged, repoPath)
+	case "uncommitted":
+		stats.errorCount++
+		stats.pullErrorMsgUncommitted = append(stats.pullErrorMsgUncommitted, repoPath)
+	}
+}
+
+// concurrent git operations
+func CheckoutRepositories(repositories []Repository, stats *GitStats) {
+
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, config.Concurrency)
 
-	// manage all repositories found
 	for _, repo := range repositories {
-
-		// increment waitgroup counter + acquire semaphore slot
 		wg.Add(1)
 		semaphore <- struct{}{}
 
-		// start go routine per repo
 		go func(repo Repository) {
-
-			// ensure we release the semaphore and close the goroutine
 			defer func() {
 				<-semaphore
 				wg.Done()
 			}()
 
-			// get repository name + create repo destination
-			repoName := string(repo.PathWithNamespace)
-			repoDestination := config.Destination + repoName
-
-			// log activity
-			logger.Print("Starting on repository: "+repoName, nil)
-
-			// make git url
-			url := fmt.Sprintf("https://%s-token:%s@%s/%s.git", config.GitBackend, config.GitToken, config.GitHost, repoName)
-
-			// check current status of repoDestination
-			checkRepo := func(repoDestination string) string {
-				checkCmd := exec.Command("git", "-C", repoDestination, "remote", "-v")
-				checkOutput, _ := checkCmd.CombinedOutput()
-				logger.Print("Checking status for repository: "+repoName, nil)
-
-				return string(checkOutput)
-			}
-			repoStatus := checkRepo(repoDestination)
-
-			// report error if not cloned or pulled repository
-			// clone repository if it does not exist
-			switch {
-			case strings.Contains(string(repoStatus), "No such file or directory"):
-
-				// log activity
-				logger.Print("Decided to clone repository: "+repoName, nil)
-
-				// clone the repo
-				cloneRepository := func(repoDestination string, url string) (string, error) {
-					cloneCmd := exec.Command("git", "clone", url, repoDestination)
-					cloneOutput, err := cloneCmd.CombinedOutput()
-
-					// set username and email
-					setGitUserName(repoName, repoDestination)
-					setGitUserMail(repoName, repoDestination)
-
-					logger.Print("Cloning repository: "+repoName+" to "+repoDestination, nil)
-
-					return string(cloneOutput), err
-				}
-				_, err := cloneRepository(repoDestination, url)
-				if err != nil {
-					logger.Print("ERROR: %v\n", err)
-				}
-
-				// set a lock, increment counters, update progressbar  and unlock
-				mu.Lock()
-				clonedCount++
-				if !config.Debug {
-					_ = bar.Add(1)
-				}
-				mu.Unlock()
-
-			// pull the latest
-			case strings.Contains(string(repoStatus), url):
-				logger.Print("Decided to pull repository: "+repoName, nil)
-				pullRepository(repoName, repoDestination)
-
-				// set username and email
-				setGitUserName(repoName, repoDestination)
-				setGitUserMail(repoName, repoDestination)
-
-				if !config.Debug {
-					_ = bar.Add(1)
-				}
-
-			default:
-				logger.Print("ERROR: decided not to clone or pull repository: "+repoName, nil)
-				logger.Print("ERROR: this is why: "+repoStatus, nil)
-
-				// set a lock, increment counters and unlock
-				mu.Lock()
-				errorCount++
-				if !config.Debug {
-					_ = bar.Add(1)
-				}
-				mu.Unlock()
-			}
+			result := processRepository(repo)
+			handleResult(result, stats)
 		}(repo)
 	}
 
-	// wait for goroutines
 	wg.Wait()
 }
 
-func pullRepository(repoName string, repoDestination string) {
+// manage single repo
+func processRepository(repo Repository) GitOperationResult {
+	repoName := string(repo.PathWithNamespace)
+	repoDestination := filepath.Join(config.Destination, repoName)
 
-	// log activity
-	logger.Print("Pulling repository: "+repoName+" at "+repoDestination, nil)
+	logger.Print("Starting on repository: "+repoName, nil)
 
-	// find remote
-	findRemote := func(repoDestination string) (string, error) {
-		remoteCmd := exec.Command("git", "-C", repoDestination, "remote", "show")
-		remoteOutput, err := remoteCmd.CombinedOutput()
-		if err != nil {
-			return "", fmt.Errorf("finding remote: %v", err)
-		}
-
-		logger.Print("Finding remote for repository: "+repoName+" at "+repoDestination, nil)
-		remote := strings.Split(strings.TrimSpace(string(remoteOutput)), "\n")[0]
-		logger.Print("Found remote; "+remote+" for repository: "+repoName+" at "+repoDestination, nil)
-		return remote, nil
-	}
-	remote, _ := findRemote(repoDestination)
-
-	// pull repository
-	pullCmd := exec.Command("git", "-C", repoDestination, "pull", remote)
-	pullOutput, err := pullCmd.CombinedOutput()
-
-	// set a lock, increment counters and unlock
-	mu.Lock()
-	pulledCount++
-	mu.Unlock()
-
+	// check repo status
+	status, err := checkRepositoryStatus(repoDestination)
 	if err != nil {
-
-		// set a lock, increment counters and unlock
-		mu.Lock()
-		errorCount++
-		pulledCount--
-		mu.Unlock()
-
-		switch {
-		case strings.Contains(string(pullOutput), "You have unstaged changes"):
-			pullErrorMsgUnstaged = append(pullErrorMsgUnstaged, repoDestination)
-			logger.Print("Found unstaged changes in repository: "+repoName+" at "+repoDestination, nil)
-
-		case strings.Contains(string(pullOutput), "Your index contains uncommitted changes"):
-			pullErrorMsgUncommitted = append(pullErrorMsgUncommitted, repoDestination)
-			logger.Print("Found uncommitted changes in repository: "+repoName+" at "+repoDestination, nil)
-
-		default:
-			logger.Print("ERROR: pulling "+repoName, nil)
+		return GitOperationResult{
+			RepoName:  repoName,
+			Operation: "error",
+			Error:     fmt.Errorf("checking repository status: %w", err),
 		}
 	}
 
-	// log activity
-	logger.Print("Pulled repository: "+repoName+" at "+repoDestination, nil)
+	gitURL := buildGitURL(repoName)
+
+	switch {
+	case strings.Contains(status, "No such file or directory"):
+		return cloneRepository(repoName, repoDestination, gitURL)
+	case strings.Contains(status, gitURL):
+		return pullRepository(repoName, repoDestination)
+	default:
+		return GitOperationResult{
+			RepoName:  repoName,
+			Operation: "error",
+			Error:     fmt.Errorf("unexpected repository status: %s", status),
+		}
+	}
 }
 
-// function to set the git user name
-func setGitUserName(repoName string, repoDestination string) {
+// check repo status
+func checkRepositoryStatus(repoDestination string) (string, error) {
+	cmd := exec.Command("git", "-C", repoDestination, "remote", "-v")
+	output, err := cmd.CombinedOutput()
 
-	gitUserNameCmd := exec.Command("git", "-C", repoDestination, "config", "user.name", config.GitUserName)
-	_, err := gitUserNameCmd.CombinedOutput()
-	if err != nil {
-		logger.Print("ERROR: %v\n", err)
+	// If directory doesn't exist, that's expected for new clones
+	if err != nil && strings.Contains(string(output), "No such file or directory") {
+		return string(output), nil
 	}
 
-	logger.Print("Setting git username for: "+repoName, nil)
+	return string(output), err
 }
 
-// function to set the git user mail
-func setGitUserMail(repoName string, repoDestination string) {
+// craft git url with auth
+func buildGitURL(repoName string) string {
+	return fmt.Sprintf("https://%s-token:%s@%s/%s.git",
+		config.GitBackend, config.GitToken, config.GitHost, repoName)
+}
 
-	gitUserMailCmd := exec.Command("git", "-C", repoDestination, "config", "user.mail", config.GitUserMail)
-	_, err := gitUserMailCmd.CombinedOutput()
+// clone new repository
+func cloneRepository(repoName, repoDestination, gitURL string) GitOperationResult {
+	logger.Print("Cloning repository: "+repoName, nil)
+
+	cmd := exec.Command("git", "clone", gitURL, repoDestination)
+	output, err := cmd.CombinedOutput()
+
 	if err != nil {
-		logger.Print("ERROR: %v\n", err)
+		return GitOperationResult{
+			RepoName:  repoName,
+			Operation: "error",
+			Error:     fmt.Errorf("cloning repository: %w, output: %s", err, string(output)),
+		}
 	}
 
-	logger.Print("Setting git email for: "+repoName, nil)
+	// set git user config
+	if err := setGitUserConfig(repoName, repoDestination); err != nil {
+		logger.Print("WARNING: failed to set git user config: "+err.Error(), nil)
+	}
+
+	return GitOperationResult{
+		RepoName:  repoName,
+		Operation: "cloned",
+	}
+}
+
+// pull repo
+func pullRepository(repoName, repoDestination string) GitOperationResult {
+	logger.Print("Pulling repository: "+repoName, nil)
+
+	// Find remote
+	remote, err := findRemote(repoDestination)
+	if err != nil {
+		return GitOperationResult{
+			RepoName:  repoName,
+			Operation: "error",
+			Error:     fmt.Errorf("finding remote: %w", err),
+		}
+	}
+
+	// pull changes
+	cmd := exec.Command("git", "-C", repoDestination, "pull", remote)
+	output, err := cmd.CombinedOutput()
+
+	if err != nil {
+		errorType := classifyPullError(string(output))
+		return GitOperationResult{
+			RepoName:  repoName,
+			Operation: "error",
+			Error:     fmt.Errorf("pulling repository: %w, output: %s", err, string(output)),
+			ErrorType: errorType,
+		}
+	}
+
+	// set git user configuration
+	if err := setGitUserConfig(repoName, repoDestination); err != nil {
+		logger.Print("WARNING: failed to set git user config: "+err.Error(), nil)
+	}
+
+	return GitOperationResult{
+		RepoName:  repoName,
+		Operation: "pulled",
+	}
+}
+
+// find remote for repo
+func findRemote(repoDestination string) (string, error) {
+	cmd := exec.Command("git", "-C", repoDestination, "remote", "show")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("getting remote: %w", err)
+	}
+
+	remotes := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(remotes) == 0 {
+		return "", fmt.Errorf("no remotes found")
+	}
+
+	return remotes[0], nil
+}
+
+// manage pull error
+func classifyPullError(output string) string {
+	switch {
+	case strings.Contains(output, "You have unstaged changes"):
+		return "unstaged"
+	case strings.Contains(output, "Your index contains uncommitted changes"):
+		return "uncommitted"
+	default:
+		return "other"
+	}
+}
+
+// set git user config
+func setGitUserConfig(repoName, repoDestination string) error {
+
+	// git user name
+	if err := setGitUserName(repoName, repoDestination); err != nil {
+		return fmt.Errorf("setting username: %w", err)
+	}
+
+	// git user mail
+	if err := setGitUserEmail(repoName, repoDestination); err != nil {
+		return fmt.Errorf("setting email: %w", err)
+	}
+
+	return nil
+}
+
+// set git user name
+func setGitUserName(repoName, repoDestination string) error {
+
+	cmd := exec.Command("git", "-C", repoDestination, "config", "user.name", config.GitUserName)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("setting git username: %w, output: %s", err, string(output))
+	}
+
+	logger.Print("Set git username for: "+repoName, nil)
+	return nil
+}
+
+// set git user mail
+func setGitUserEmail(repoName, repoDestination string) error {
+
+	cmd := exec.Command("git", "-C", repoDestination, "config", "user.email", config.GitUserMail)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("setting git email: %w, output: %s", err, string(output))
+	}
+
+	logger.Print("Set git email for: "+repoName, nil)
+	return nil
+}
+
+// manage results
+func handleResult(result GitOperationResult, stats *GitStats) {
+
+	switch result.Operation {
+	case "cloned":
+		stats.IncrementCounter("cloned", "")
+		logger.Print("Successfully cloned: "+result.RepoName, nil)
+
+	case "pulled":
+		stats.IncrementCounter("pulled", "")
+		logger.Print("Successfully pulled: "+result.RepoName, nil)
+
+	case "error":
+		if result.ErrorType == "unstaged" {
+			stats.IncrementCounter("unstaged", result.RepoName)
+			logger.Print("Found unstaged changes in: "+result.RepoName, nil)
+		} else if result.ErrorType == "uncommitted" {
+			stats.IncrementCounter("uncommitted", result.RepoName)
+			logger.Print("Found uncommitted changes in: "+result.RepoName, nil)
+		} else {
+			stats.IncrementCounter("error", "")
+			logger.Print("ERROR processing "+result.RepoName+": "+result.Error.Error(), nil)
+		}
+	}
+
+	// update progress bar
+	if !config.Debug {
+		_ = bar.Add(1)
+	}
 }

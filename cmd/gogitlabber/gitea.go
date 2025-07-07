@@ -1,99 +1,238 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
+	"time"
 
 	"github.com/scornet256/go-logger"
 )
 
-func fetchRepositoriesGitea() ([]Repository, error) {
+// giteaClient struct
+type GiteaClient struct {
+	httpClient *http.Client
+	baseURL    string
+	token      string
+}
 
-	type GiteaRepository struct {
-		Name     string `json:"name"`
-		FullName string `json:"full_name"`
+// gitea repo information
+type GiteaRepository struct {
+	Name     string `json:"name"`
+	FullName string `json:"full_name"`
+}
+
+// gitea api options
+type GiteaAPIOptions struct {
+	Visibility      string
+	IncludeArchived string
+	Sort            string
+	Limit           int
+	Page            int
+}
+
+// gitea api clien
+func NewGiteaClient(baseURL, token string) *GiteaClient {
+	return &GiteaClient{
+		httpClient: &http.Client{
+			Timeout: 30 * time.Second,
+		},
+		baseURL: baseURL,
+		token:   token,
+	}
+}
+
+// fetch gitea repos
+func FetchRepositoriesGitea() ([]Repository, error) {
+	client := NewGiteaClient(config.GitHost, config.GitToken)
+
+	options := GiteaAPIOptions{
+		Visibility:      "all",
+		IncludeArchived: config.IncludeArchived,
+		Sort:            "alpha",
+		Limit:           100,
+		Page:            1,
 	}
 
-	// default options
-	visibility := "visibility=all"
-	perpage := "limit=100"
-	sort := "sort=alpha"
-
-	// configure archived options
-	var archived string
-	switch config.IncludeArchived {
-	case "excluded":
-		archived = "&archived=false"
-	case "only":
-		archived = "&archived=true"
-	default:
-		archived = ""
-	}
-
-	url := fmt.Sprintf("https://%s/api/v1/user/repos?%s&%s&%s%s",
-		config.GitHost, visibility, sort, perpage, archived)
-
-	logger.Print("HTTP: Creating API request", nil)
-	req, err := http.NewRequest("GET", url, nil)
+	repositories, err := client.fetchAllRepositories(context.Background(), options)
 	if err != nil {
-		return nil, fmt.Errorf("ERROR: creating request: %v", err)
+		return nil, fmt.Errorf("fetching repositories: %w", err)
 	}
 
-	logger.Print("HTTP: Adding Authorization header to API request", nil)
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", config.GitToken))
+	if len(repositories) == 0 {
+		return repositories, fmt.Errorf("no repositories found")
+	}
 
-	logger.Print("HTTP: Making request", nil)
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	// update progress bar
+	if err := updateProgressBar(len(repositories)); err != nil {
+		logger.Print("WARNING: failed to update progress bar: "+err.Error(), nil)
+	}
+
+	logger.Print(fmt.Sprintf("Successfully fetched %d repositories", len(repositories)), nil)
+	return repositories, nil
+}
+
+// fetch all repos with pagination
+func (c *GiteaClient) fetchAllRepositories(ctx context.Context, options GiteaAPIOptions) ([]Repository, error) {
+	var allRepositories []Repository
+
+	for {
+		giteaRepos, hasMore, err := c.fetchRepositoryPage(ctx, options)
+		if err != nil {
+			return nil, fmt.Errorf("fetching page %d: %w", options.Page, err)
+		}
+
+		// convert gitea repositories to repo type
+		repositories := convertGiteaRepositories(giteaRepos)
+		allRepositories = append(allRepositories, repositories...)
+
+		if !hasMore {
+			break
+		}
+
+		options.Page++
+	}
+
+	return allRepositories, nil
+}
+
+// fetch single page of repo
+func (c *GiteaClient) fetchRepositoryPage(ctx context.Context, options GiteaAPIOptions) ([]GiteaRepository, bool, error) {
+	apiURL, err := c.buildAPIURL(options)
 	if err != nil {
-		return nil, fmt.Errorf("ERROR: making request: %v", err)
+		return nil, false, fmt.Errorf("building API URL: %w", err)
 	}
 
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+	if err != nil {
+		return nil, false, fmt.Errorf("creating request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", c.token))
+	req.Header.Set("Accept", "application/json")
+
+	logger.Print("Making API request to: "+apiURL, nil)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, false, fmt.Errorf("making request: %w", err)
+	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			logger.Fatal("HTTP: Error closing response body", err)
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			logger.Print("WARNING: failed to close response body: "+closeErr.Error(), nil)
 		}
 	}()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("ERROR: API request failed with status: %d", resp.StatusCode)
+		return nil, false, fmt.Errorf("API request failed with status %d: %s", resp.StatusCode, resp.Status)
 	}
-	logger.Print("HTTP: Decoding JSON response", nil)
 
-	// first decode into gitearepository slice
 	var giteaRepos []GiteaRepository
 	if err := json.NewDecoder(resp.Body).Decode(&giteaRepos); err != nil {
-		return nil, fmt.Errorf("ERROR: decoding response: %v", err)
+		return nil, false, fmt.Errorf("decoding JSON response: %w", err)
 	}
 
-	// convert to repository slice
+	// check for more pages
+	hasMore := len(giteaRepos) == options.Limit
+
+	return giteaRepos, hasMore, nil
+}
+
+// build final api url
+func (c *GiteaClient) buildAPIURL(options GiteaAPIOptions) (string, error) {
+	baseURL := fmt.Sprintf("https://%s/api/v1/user/repos", c.baseURL)
+
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("parsing base URL: %w", err)
+	}
+
+	query := u.Query()
+	query.Set("visibility", options.Visibility)
+	query.Set("sort", options.Sort)
+	query.Set("limit", strconv.Itoa(options.Limit))
+	query.Set("page", strconv.Itoa(options.Page))
+
+	// handle archived
+	switch options.IncludeArchived {
+	case "excluded":
+		query.Set("archived", "false")
+	case "only":
+		query.Set("archived", "true")
+	}
+
+	u.RawQuery = query.Encode()
+	return u.String(), nil
+}
+
+// convert gitea repos to repo type
+func convertGiteaRepositories(giteaRepos []GiteaRepository) []Repository {
 	repositories := make([]Repository, len(giteaRepos))
-	for repo, giteaRepo := range giteaRepos {
-		repositories[repo] = Repository{
+	for i, giteaRepo := range giteaRepos {
+		repositories[i] = Repository{
 			Name:              giteaRepo.Name,
 			PathWithNamespace: giteaRepo.FullName,
 		}
 	}
+	return repositories
+}
 
-	if len(repositories) < 1 {
-		return repositories, fmt.Errorf("ERROR: no repositories found")
-	}
-	repoCount := len(repositories)
-
-	logger.Print("BAR: Resetting the progressbar", nil)
-	if !config.Debug {
-		err = bar.Set(0)
-		if err != nil {
-			logger.Fatal("Could not reset the progressbar", err)
-		}
+// update progressbar
+func updateProgressBar(repoCount int) error {
+	if config.Debug {
+		return nil // Skip progress bar in debug mode
 	}
 
-	logger.Print("BAR: Increasing the max value of the progressbar", nil)
-	if !config.Debug {
-		bar.ChangeMax(repoCount)
+	logger.Print("Resetting progress bar", nil)
+	if err := bar.Set(0); err != nil {
+		return fmt.Errorf("resetting progress bar: %w", err)
 	}
 
-	logger.Print("HTTP: Returning repositories found", nil)
-	return repositories, nil
+	logger.Print("Setting progress bar maximum", nil)
+	bar.ChangeMax(repoCount)
+
+	return nil
+}
+
+// connection validation
+func (c *GiteaClient) ValidateConnection(ctx context.Context) error {
+	apiURL := fmt.Sprintf("https://%s/api/v1/user", c.baseURL)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", apiURL, nil)
+	if err != nil {
+		return fmt.Errorf("creating validation request: %w", err)
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", c.token))
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("making validation request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		return fmt.Errorf("invalid or expired token")
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("API validation failed with status %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
+// simply count git repos only
+func (c *GiteaClient) GetRepositoryCount(ctx context.Context, options GiteaAPIOptions) (int, error) {
+
+	repos, err := c.fetchAllRepositories(ctx, options)
+	if err != nil {
+		return 0, fmt.Errorf("counting repositories: %w", err)
+	}
+
+	return len(repos), nil
 }

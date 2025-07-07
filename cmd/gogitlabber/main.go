@@ -10,13 +10,6 @@ import (
 var version string
 var config *Config
 
-// keep count 🧛
-var clonedCount int
-var errorCount int
-var pulledCount int
-var pullErrorMsgUnstaged []string
-var pullErrorMsgUncommitted []string
-
 // repository data
 type Repository struct {
 	Name              string `json:"name"`
@@ -58,7 +51,7 @@ func main() {
 	var repositories []Repository
 	switch config.GitBackend {
 	case "gitea":
-		repositories, err = fetchRepositoriesGitea()
+		repositories, err = FetchRepositoriesGitea()
 		if err != nil {
 			logger.Fatal("Fetching repositories failed", err)
 		}
@@ -72,8 +65,9 @@ func main() {
 	}
 
 	// manage found repositories
-	checkoutRepositories(repositories)
-	printSummary()
-	printPullErrorUnstaged(pullErrorMsgUnstaged)
-	printPullErrorUncommitted(pullErrorMsgUncommitted)
+	stats := &GitStats{}
+	CheckoutRepositories(repositories, stats)
+	printSummary(stats)
+	printPullErrorUnstaged(stats)
+	printPullErrorUncommitted(stats)
 }

@@ -1,22 +1,14 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/scornet256/go-logger"
 )
 
 // version
 var version string
-
-// userdata
-var concurrency int
-var debug bool
-var includeArchived string
-var repoDestinationPre string
-
-// git
-var gitHost string
-var gitToken string
-var gitBackend string
+var config *Config
 
 // keep count 🧛
 var clonedCount int
@@ -34,16 +26,16 @@ type Repository struct {
 func main() {
 
 	// set app version
-	version = "1.1.5"
+	version = "2.0.0"
 
 	// set appname for logger
 	logger.SetAppName("gogitlabber")
 
-	// manage all argument magic
-	manageArguments()
+	// manage all argument magic and load configuration
+	config = manageArguments()
 
 	// set debugging
-	logger.SetDebug(debug)
+	logger.SetDebug(config.Debug)
 
 	// check for git
 	err := verifyGitAvailable()
@@ -52,14 +44,19 @@ func main() {
 	}
 	logger.Print("VALIDATION: git found in path", nil)
 
+	// validate git backend is set
+	if config.GitBackend == "" {
+		logger.Fatal("Configuration error: git_backend is required (gitlab|gitea)", nil)
+	}
+
 	// make initial progressbar
-	if !debug {
+	if !config.Debug {
 		progressBar()
 	}
 
 	// fetch repository information
 	var repositories []Repository
-	switch gitBackend {
+	switch config.GitBackend {
 	case "gitea":
 		repositories, err = fetchRepositoriesGitea()
 		if err != nil {
@@ -71,11 +68,11 @@ func main() {
 			logger.Fatal("Fetching repositories failed", err)
 		}
 	default:
-		logger.Fatal("Fetching repositories failed", err)
+		logger.Fatal(fmt.Sprintf("Unsupported git backend: %s (supported: gitlab|gitea)", config.GitBackend), nil)
 	}
 
 	// manage found repositories
-	checkoutRepositories(repositories, concurrency)
+	checkoutRepositories(repositories)
 	printSummary()
 	printPullErrorUnstaged(pullErrorMsgUnstaged)
 	printPullErrorUncommitted(pullErrorMsgUncommitted)

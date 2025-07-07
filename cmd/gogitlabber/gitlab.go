@@ -17,7 +17,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 
 	// configure archived options
 	var archived string
-	switch includeArchived {
+	switch config.IncludeArchived {
 	case "excluded":
 		archived = "&archived=false"
 	case "only":
@@ -27,7 +27,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	}
 
 	url := fmt.Sprintf("https://%s/api/v4/projects?%s&%s&%s%s",
-		gitHost, membership, order, perpage, archived)
+		config.GitHost, membership, order, perpage, archived)
 
 	logger.Print("HTTP: Creating API request", nil)
 	req, err := http.NewRequest("GET", url, nil)
@@ -36,7 +36,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	}
 
 	logger.Print("HTTP: Adding PRIVATE-TOKEN header to API request", nil)
-	req.Header.Set("PRIVATE-TOKEN", gitToken)
+	req.Header.Set("PRIVATE-TOKEN", config.GitToken)
 
 	logger.Print("HTTP: Making request", nil)
 	client := &http.Client{}
@@ -67,7 +67,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	repoCount := len(repositories)
 
 	logger.Print("BAR: Resetting the progressbar", nil)
-	if !debug {
+	if !config.Debug {
 		err = bar.Set(0)
 		if err != nil {
 			logger.Fatal("Could not reset the progressbar", err)
@@ -75,7 +75,7 @@ func fetchRepositoriesGitlab() ([]Repository, error) {
 	}
 
 	logger.Print("BAR: Increasing the max value of the progressbar", nil)
-	if !debug {
+	if !config.Debug {
 		bar.ChangeMax(repoCount)
 	}
 

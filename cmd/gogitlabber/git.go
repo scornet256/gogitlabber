@@ -12,11 +12,11 @@ import (
 // add a mutex to safely increment shared counters
 var mu sync.Mutex
 
-func checkoutRepositories(repositories []Repository, concurrency int) {
+func checkoutRepositories(repositories []Repository) {
 
 	// create a waitgroup + semaphore channel
 	var wg sync.WaitGroup
-	semaphore := make(chan struct{}, concurrency)
+	semaphore := make(chan struct{}, config.Concurrency)
 
 	// manage all repositories found
 	for _, repo := range repositories {
@@ -36,13 +36,13 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 
 			// get repository name + create repo destination
 			repoName := string(repo.PathWithNamespace)
-			repoDestination := repoDestinationPre + repoName
+			repoDestination := config.Destination + repoName
 
 			// log activity
 			logger.Print("Starting on repository: "+repoName, nil)
 
 			// make git url
-			url := fmt.Sprintf("https://%s-token:%s@%s/%s.git", gitBackend, gitToken, gitHost, repoName)
+			url := fmt.Sprintf("https://%s-token:%s@%s/%s.git", config.GitBackend, config.GitToken, config.GitHost, repoName)
 
 			// check current status of repoDestination
 			checkRepo := func(repoDestination string) string {
@@ -78,7 +78,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				// set a lock, increment counters, update progressbar  and unlock
 				mu.Lock()
 				clonedCount++
-				if !debug {
+				if !config.Debug {
 					_ = bar.Add(1)
 				}
 				mu.Unlock()
@@ -87,7 +87,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 			case strings.Contains(string(repoStatus), url):
 				logger.Print("Decided to pull repository: "+repoName, nil)
 				pullRepository(repoName, repoDestination)
-				if !debug {
+				if !config.Debug {
 					_ = bar.Add(1)
 				}
 
@@ -98,7 +98,7 @@ func checkoutRepositories(repositories []Repository, concurrency int) {
 				// set a lock, increment counters and unlock
 				mu.Lock()
 				errorCount++
-				if !debug {
+				if !config.Debug {
 					_ = bar.Add(1)
 				}
 				mu.Unlock()

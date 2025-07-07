@@ -22,7 +22,7 @@ func fetchRepositoriesGitea() ([]Repository, error) {
 
 	// configure archived options
 	var archived string
-	switch includeArchived {
+	switch config.IncludeArchived {
 	case "excluded":
 		archived = "&archived=false"
 	case "only":
@@ -32,7 +32,7 @@ func fetchRepositoriesGitea() ([]Repository, error) {
 	}
 
 	url := fmt.Sprintf("https://%s/api/v1/user/repos?%s&%s&%s%s",
-		gitHost, visibility, sort, perpage, archived)
+		config.GitHost, visibility, sort, perpage, archived)
 
 	logger.Print("HTTP: Creating API request", nil)
 	req, err := http.NewRequest("GET", url, nil)
@@ -41,7 +41,7 @@ func fetchRepositoriesGitea() ([]Repository, error) {
 	}
 
 	logger.Print("HTTP: Adding Authorization header to API request", nil)
-	req.Header.Set("Authorization", fmt.Sprintf("token %s", gitToken))
+	req.Header.Set("Authorization", fmt.Sprintf("token %s", config.GitToken))
 
 	logger.Print("HTTP: Making request", nil)
 	client := &http.Client{}
@@ -82,7 +82,7 @@ func fetchRepositoriesGitea() ([]Repository, error) {
 	repoCount := len(repositories)
 
 	logger.Print("BAR: Resetting the progressbar", nil)
-	if !debug {
+	if !config.Debug {
 		err = bar.Set(0)
 		if err != nil {
 			logger.Fatal("Could not reset the progressbar", err)
@@ -90,7 +90,7 @@ func fetchRepositoriesGitea() ([]Repository, error) {
 	}
 
 	logger.Print("BAR: Increasing the max value of the progressbar", nil)
-	if !debug {
+	if !config.Debug {
 		bar.ChangeMax(repoCount)
 	}
 

@@ -4,151 +4,168 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
+	"path/filepath"
 	"strings"
 
 	"github.com/scornet256/go-logger"
+	"gopkg.in/yaml.v3"
 )
 
-// set default values and override values from environment variables
-func setDefaultsFromEnv() {
+// config struct for config
+type Config struct {
+	Concurrency     int    `yaml:"concurrency"`
+	Debug           bool   `yaml:"debug"`
+	Destination     string `yaml:"destination"`
+	GitBackend      string `yaml:"git_backend"`
+	GitHost         string `yaml:"git_host"`
+	GitToken        string `yaml:"git_token"`
+	IncludeArchived string `yaml:"include_archived"`
+}
 
-	// set default values
-	debug = false
-	concurrency = 15
-	gitHost = "gitlab.com"
-	gitToken = ""
-	includeArchived = "excluded"
-	repoDestinationPre = "$HOME/Documents"
+// setdefaults sets default values for the configuration
+func (conf *Config) setDefaults() {
+	conf.Concurrency = 15
+	conf.Debug = false
+	conf.Destination = "$HOME/Documents"
+	conf.GitBackend = ""
+	conf.GitHost = "gitlab.com"
+	conf.GitToken = ""
+	conf.IncludeArchived = "excluded"
+}
 
-	// override with environment variables if present
-	if envDebug := os.Getenv("GOGITLABBER_DEBUG"); envDebug != "" {
-		if debugVal, err := strconv.ParseBool(envDebug); err == nil {
-			debug = debugVal
-		} else {
-			logger.Print("Warning: Invalid debug value in environment, using default", nil)
+// expand variable paths
+func expandPath(path string) string {
+
+	// expand environment variables like $home
+	expanded := os.ExpandEnv(path)
+
+	// expand ~
+	if strings.HasPrefix(expanded, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return expanded
 		}
-	}
-
-	if envBackend := os.Getenv("GOGITLABBER_BACKEND"); envBackend != "" {
-		gitBackend = envBackend
-	}
-
-	if envToken := os.Getenv("GIT_API_TOKEN"); envToken != "" {
-		gitToken = envToken
-	}
-
-	if envHost := os.Getenv("GIT_URL"); envHost != "" {
-		gitHost = envHost
-	}
-
-	if envRepoDest := os.Getenv("GOGITLABBER_DESTINATION"); envRepoDest != "" {
-		repoDestinationPre = envRepoDest
-	}
-
-	if envConcurrency := os.Getenv("GOGITLABBER_CONCURRENCY"); envConcurrency != "" {
-		if concurrencyVal, err := strconv.Atoi(envConcurrency); err == nil {
-			concurrency = concurrencyVal
-		} else {
-			logger.Print("Warning: Invalid concurrency value in environment, using default", nil)
+		expanded = filepath.Join(home, expanded[2:])
+	} else if expanded == "~" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return expanded
 		}
+		expanded = home
 	}
 
-	if envArchived := os.Getenv("GOGITLABBER_ARCHIVED"); envArchived != "" {
-		switch envArchived {
-		case "any", "exclusive", "excluded":
-			includeArchived = envArchived
-		default:
-			logger.Print("Warning: Invalid archived value in environment, using default", nil)
-		}
+	return filepath.Clean(expanded)
+}
+
+// loadconfig from yaml file
+func loadConfig(configPath string) (*Config, error) {
+	config := &Config{}
+	config.setDefaults()
+
+	// check if config file exists
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		return nil, fmt.Errorf("config file not found: %s", configPath)
+	}
+
+	// read config
+	data, err := os.ReadFile(configPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
+
+	// parse yaml
+	if err := yaml.Unmarshal(data, config); err != nil {
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
+	}
+
+	return config, nil
+}
+
+// validateConfig validates the configuration values
+func (conf *Config) validateConfig() error {
+	// validate required parameters
+	if conf.GitToken == "" {
+		return fmt.Errorf("git_token is required")
+	}
+
+	// validate archived option
+	switch conf.IncludeArchived {
+	case "any", "exclusive", "excluded":
+	default:
+		return fmt.Errorf("invalid include_archived option: %s (must be any|excluded|exclusive)", conf.IncludeArchived)
+	}
+
+	// validate concurrency
+	if conf.Concurrency < 1 {
+		return fmt.Errorf("concurrency must be greater than 0")
+	}
+
+	return nil
+}
+
+// process config after loading
+func (conf *Config) processConfig() {
+	// expand path variables
+	conf.Destination = expandPath(conf.Destination)
+
+	// add trailing slash if not provided
+	if !strings.HasSuffix(conf.Destination, "/") {
+		conf.Destination += "/"
 	}
 }
 
-func manageArguments() {
+// log active config
+func (conf *Config) logConfig(configPath string) {
+	logger.Print("Configuration: Using config file: "+configPath, nil)
+	logger.Print("Configuration: Using host: "+conf.GitHost, nil)
+	logger.Print("Configuration: Using destination: "+conf.Destination, nil)
+	logger.Print("Configuration: Using concurrency: "+fmt.Sprintf("%d", conf.Concurrency), nil)
+	logger.Print("Configuration: Using archived option: "+conf.IncludeArchived, nil)
+	if conf.Debug {
+		logger.Print("Configuration: Debug mode enabled", nil)
+	}
+}
 
-	// set defaults from environment variables
-	setDefaultsFromEnv()
+// manage arguments
+func manageArguments() *Config {
 
-	// define flags (which will override environment variables)
-	var archivedFlag = flag.String(
-		"archived",
-		includeArchived,
-		"To include archived repositories (any|excluded|exclusive)\n  example: -archived=any\nenv = GOGITLABBER_ARCHIVED\n")
+	defaultConfigPath := "./$HOME./gogitlabber.yaml"
 
-	var concurrencyFlag = flag.Int(
-		"concurrency",
-		concurrency,
-		"Specify repository concurrency\n  example: -concurrency=15\nenv = GOGITLABBER_CONCURRENCY\n")
-
-	var destinationFlag = flag.String(
-		"destination",
-		repoDestinationPre,
-		"Specify where to check the repositories out\n  example: -destination=$HOME/repos\nenv = GOGITLABBER_DESTINATION\n")
-
-	var backendFlag = flag.String(
-		"backend",
-		gitBackend,
-		"Specify git backend\n  example -backend=gitlab\nenv = GOGITLABBER_BACKEND\n")
-
-	var hostFlag = flag.String(
-		"git-url",
-		gitHost,
-		"Specify GitLab/Gitea host\n  example: -git-url=gitlab.com\nenv = GIT_URL\n")
-
-	var tokenFlag = flag.String(
-		"git-api-token",
-		gitToken,
-		"Specify GitLab/Gitea API token\n  example: -git-api=glpat-xxxx\nenv = GIT_API_TOKEN\n")
-
-	var debugFlag = flag.Bool(
-		"debug",
-		debug,
-		"Toggle debug mode\n  example: -debug=true\nenv = GOGITLABBER_DEBUG\n")
+	// Define only the config file flag
+	configFileFlag := flag.String(
+		"config",
+		defaultConfigPath,
+		"Specify config file path (YAML)\n  example: -config=./config/app.yaml")
 
 	versionFlag := flag.Bool("version", false, "Print the version and exit")
 
 	flag.Parse()
 
-	// print version
 	if *versionFlag {
 		fmt.Println(version)
 		os.Exit(0)
 	}
 
-	// override with flag values (higher precedence)
-	concurrency = *concurrencyFlag
-	debug = *debugFlag
-	gitHost = *hostFlag
-	gitToken = *tokenFlag
-	gitBackend = *backendFlag
-	includeArchived = *archivedFlag
-	repoDestinationPre = *destinationFlag
+	configPath := *configFileFlag
 
-	// add slash 🎩🎸 if not provided
-	if !strings.HasSuffix(repoDestinationPre, "/") {
-		repoDestinationPre += "/"
-	}
-
-	// validate required parameters
-	if gitToken == "" {
+	// Load configuration from YAML file
+	config, err := loadConfig(configPath)
+	if err != nil {
 		flag.Usage()
-		logger.Fatal("Configuration: API Token not found", nil)
+		logger.Fatal("Configuration error: "+err.Error(), nil)
 	}
 
-	// validate archived option
-	switch includeArchived {
-	case "any", "exclusive", "excluded":
-	default:
+	// Process configuration
+	config.processConfig()
+
+	// Validate configuration
+	if err := config.validateConfig(); err != nil {
 		flag.Usage()
-		logger.Fatal("Configuration: Invalid archive option: "+includeArchived, nil)
+		logger.Fatal("Configuration validation error: "+err.Error(), nil)
 	}
 
-	// log configuration
-	logger.Print("Configuration: Using host: "+gitHost, nil)
-	logger.Print("Configuration: Using destination: "+repoDestinationPre, nil)
-	logger.Print("Configuration: Using concurrency: "+strconv.Itoa(concurrency), nil)
-	logger.Print("Configuration: Using archived option: "+includeArchived, nil)
-	if debug {
-		logger.Print("Configuration: Debug mode enabled", nil)
-	}
+	// Log configuration
+	config.logConfig(configPath)
+
+	return config
 }

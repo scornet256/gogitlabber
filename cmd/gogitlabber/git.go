@@ -176,21 +176,19 @@ func pullRepository(repoName string, repoDestination string) {
 }
 
 // function to set the git user name
-func setGitUserName(repoName string, repoDestination string) error {
+func setGitUserName(repoName string, repoDestination string) {
 
 	gitUserNameCmd := exec.Command("git", "-C", repoDestination, "config", "user.name", config.GitUserName)
-	_, err := gitUserNameCmd.CombinedOutput()
+	gitUserNameCmd.CombinedOutput()
 
 	logger.Print("Setting git username for: "+repoName, nil)
-	return err
 }
 
 // function to set the git user mail
-func setGitUserMail(repoName string, repoDestination string) error {
+func setGitUserMail(repoName string, repoDestination string) {
 
 	gitUserMailCmd := exec.Command("git", "-C", repoDestination, "config", "user.mail", config.GitUserMail)
-	_, err := gitUserMailCmd.CombinedOutput()
+	gitUserMailCmd.CombinedOutput()
 
 	logger.Print("Setting git email for: "+repoName, nil)
-	return err
 }

@@ -179,7 +179,10 @@ func pullRepository(repoName string, repoDestination string) {
 func setGitUserName(repoName string, repoDestination string) {
 
 	gitUserNameCmd := exec.Command("git", "-C", repoDestination, "config", "user.name", config.GitUserName)
-	gitUserNameCmd.CombinedOutput()
+	_, err := gitUserNameCmd.CombinedOutput()
+	if err != nil {
+		logger.Print("ERROR: %v\n", err)
+	}
 
 	logger.Print("Setting git username for: "+repoName, nil)
 }
@@ -188,7 +191,10 @@ func setGitUserName(repoName string, repoDestination string) {
 func setGitUserMail(repoName string, repoDestination string) {
 
 	gitUserMailCmd := exec.Command("git", "-C", repoDestination, "config", "user.mail", config.GitUserMail)
-	gitUserMailCmd.CombinedOutput()
+	_, err := gitUserMailCmd.CombinedOutput()
+	if err != nil {
+		logger.Print("ERROR: %v\n", err)
+	}
 
 	logger.Print("Setting git email for: "+repoName, nil)
 }

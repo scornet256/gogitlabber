@@ -213,7 +213,11 @@ func (c *GiteaClient) ValidateConnection(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("making validation request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logger.Print("failed to close response body: %v", err)
+		}
+	}()
 
 	if resp.StatusCode == http.StatusUnauthorized {
 		return fmt.Errorf("invalid or expired token")

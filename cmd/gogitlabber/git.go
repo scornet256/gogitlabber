@@ -274,13 +274,16 @@ func handleResult(result GitOperationResult, stats *GitStats) {
 		logger.Print("Successfully pulled: "+result.RepoName, nil)
 
 	case "error":
-		if result.ErrorType == "unstaged" {
+		switch result.ErrorType {
+		case "unstaged":
 			stats.IncrementCounter("unstaged", result.RepoName)
 			logger.Print("Found unstaged changes in: "+result.RepoName, nil)
-		} else if result.ErrorType == "uncommitted" {
+
+		case "uncommitted":
 			stats.IncrementCounter("uncommitted", result.RepoName)
 			logger.Print("Found uncommitted changes in: "+result.RepoName, nil)
-		} else {
+
+		default:
 			stats.IncrementCounter("error", "")
 			logger.Print("ERROR processing "+result.RepoName+": "+result.Error.Error(), nil)
 		}

@@ -56,7 +56,7 @@ func main() {
 			logger.Fatal("Fetching repositories failed", err)
 		}
 	case "gitlab":
-		repositories, err = fetchRepositoriesGitlab()
+		repositories, err = FetchRepositoriesGitLab()
 		if err != nil {
 			logger.Fatal("Fetching repositories failed", err)
 		}

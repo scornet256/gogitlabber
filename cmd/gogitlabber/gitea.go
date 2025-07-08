@@ -34,7 +34,7 @@ type GiteaAPIOptions struct {
 	Page            int
 }
 
-// gitea api clien
+// gitea api client
 func NewGiteaClient(baseURL, token string) *GiteaClient {
 	return &GiteaClient{
 		httpClient: &http.Client{
@@ -141,7 +141,7 @@ func (c *GiteaClient) fetchRepositoryPage(ctx context.Context, options GiteaAPIO
 	return giteaRepos, hasMore, nil
 }
 
-// build final api url
+// build api url
 func (c *GiteaClient) buildAPIURL(options GiteaAPIOptions) (string, error) {
 	baseURL := fmt.Sprintf("https://%s/api/v1/user/repos", c.baseURL)
 

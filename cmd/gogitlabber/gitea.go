@@ -180,23 +180,6 @@ func convertGiteaRepositories(giteaRepos []GiteaRepository) []Repository {
 	return repositories
 }
 
-// update progressbar
-func updateProgressBar(repoCount int) error {
-	if config.Debug {
-		return nil // Skip progress bar in debug mode
-	}
-
-	logger.Print("Resetting progress bar", nil)
-	if err := bar.Set(0); err != nil {
-		return fmt.Errorf("resetting progress bar: %w", err)
-	}
-
-	logger.Print("Setting progress bar maximum", nil)
-	bar.ChangeMax(repoCount)
-
-	return nil
-}
-
 // connection validation
 func (c *GiteaClient) ValidateConnection(ctx context.Context) error {
 	apiURL := fmt.Sprintf("https://%s/api/v1/user", c.baseURL)

@@ -67,7 +67,5 @@ func main() {
 	// manage found repositories
 	stats := &GitStats{}
 	CheckoutRepositories(repositories, stats)
-	printSummary(stats)
-	printPullErrorUnstaged(stats)
-	printPullErrorUncommitted(stats)
+	printDetailedSummary(stats)
 }

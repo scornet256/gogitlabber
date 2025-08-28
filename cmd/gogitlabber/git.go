@@ -26,6 +26,7 @@ type GitStats struct {
 	errorCount              int
 	pullErrorMsgUnstaged    []string
 	pullErrorMsgUncommitted []string
+	generalErrors           []string
 }
 
 // increment counters
@@ -41,6 +42,7 @@ func (stats *GitStats) IncrementCounter(operation string, repoPath string) {
 		stats.pulledCount++
 	case "error":
 		stats.errorCount++
+		stats.generalErrors = append(stats.generalErrors, repoPath)
 	case "unstaged":
 		stats.errorCount++
 		stats.pullErrorMsgUnstaged = append(stats.pullErrorMsgUnstaged, repoPath)
@@ -263,7 +265,6 @@ func setGitUserEmail(repoName, repoDestination string) error {
 
 // manage results
 func handleResult(result GitOperationResult, stats *GitStats) {
-
 	switch result.Operation {
 	case "cloned":
 		stats.IncrementCounter("cloned", "")
@@ -284,7 +285,7 @@ func handleResult(result GitOperationResult, stats *GitStats) {
 			logger.Print("Found uncommitted changes in: "+result.RepoName, nil)
 
 		default:
-			stats.IncrementCounter("error", "")
+			stats.IncrementCounter("error", result.RepoName)
 			logger.Print("ERROR processing "+result.RepoName+": "+result.Error.Error(), nil)
 		}
 	}

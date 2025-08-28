@@ -85,15 +85,29 @@ func printPullErrorUncommitted(stats *GitStats) {
 	}
 }
 
-// print errors
+// print all errors
 func printAllErrors(stats *GitStats) {
 	printPullErrorUnstaged(stats)
 	printPullErrorUncommitted(stats)
+	printGeneralErrors(stats)
+}
+
+// print general errors
+func printGeneralErrors(stats *GitStats) {
+	if len(stats.generalErrors) > 0 {
+		fmt.Println("Repositories with errors:")
+		for _, repo := range stats.generalErrors {
+			fmt.Printf("❌ %s failed to process.\n", repo)
+		}
+		fmt.Println()
+	}
 }
 
 // check for errors
 func hasErrors(stats *GitStats) bool {
-	return len(stats.pullErrorMsgUnstaged) > 0 || len(stats.pullErrorMsgUncommitted) > 0
+	return len(stats.pullErrorMsgUnstaged) > 0 || 
+				 len(stats.pullErrorMsgUncommitted) > 0 || 
+				 len(stats.generalErrors) > 0 // Add this
 }
 
 // print detailed summary

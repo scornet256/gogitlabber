@@ -105,9 +105,9 @@ func printGeneralErrors(stats *GitStats) {
 
 // check for errors
 func hasErrors(stats *GitStats) bool {
-	return len(stats.pullErrorMsgUnstaged) > 0 || 
-				 len(stats.pullErrorMsgUncommitted) > 0 || 
-				 len(stats.generalErrors) > 0
+	return len(stats.pullErrorMsgUnstaged) > 0 ||
+		len(stats.pullErrorMsgUncommitted) > 0 ||
+		len(stats.generalErrors) > 0
 }
 
 // print detailed summary

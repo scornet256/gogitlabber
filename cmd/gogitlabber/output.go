@@ -36,7 +36,7 @@ func progressBar() {
 
 // update progressbar
 func updateProgressBar(repoCount int) error {
-	if config.Debug {
+	if globalConfig.Debug {
 		return nil // Skip progress bar in debug mode
 	}
 	logger.Print("Resetting progress bar", nil)
@@ -68,7 +68,7 @@ func printPullErrorUnstaged(stats *GitStats) {
 	if len(stats.pullErrorMsgUnstaged) > 0 {
 		fmt.Println("Repositories with unstaged changes:")
 		for _, repo := range stats.pullErrorMsgUnstaged {
-			fmt.Printf("❕ %s has unstaged changes.\n", repo)
+			fmt.Printf("• %s has unstaged changes.\n", repo)
 		}
 		fmt.Println()
 	}
@@ -79,7 +79,7 @@ func printPullErrorUncommitted(stats *GitStats) {
 	if len(stats.pullErrorMsgUncommitted) > 0 {
 		fmt.Println("Repositories with uncommitted changes:")
 		for _, repo := range stats.pullErrorMsgUncommitted {
-			fmt.Printf("❕ %s has uncommitted changes.\n", repo)
+			fmt.Printf("• %s has uncommitted changes.\n", repo)
 		}
 		fmt.Println()
 	}
@@ -97,7 +97,7 @@ func printGeneralErrors(stats *GitStats) {
 	if len(stats.generalErrors) > 0 {
 		fmt.Println("Repositories with errors:")
 		for _, repo := range stats.generalErrors {
-			fmt.Printf("❌ %s failed to process.\n", repo)
+			fmt.Printf("✗ %s failed to process.\n", repo)
 		}
 		fmt.Println()
 	}

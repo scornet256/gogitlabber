@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"os/exec"
+	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
+	"github.com/go-git/go-git/v6"
+	"github.com/go-git/go-git/v6/plumbing/transport/http"
 	"github.com/scornet256/go-logger"
 )
 
@@ -31,7 +32,6 @@ type GitStats struct {
 
 // increment counters
 func (stats *GitStats) IncrementCounter(operation string, repoPath string) {
-
 	stats.mu.Lock()
 	defer stats.mu.Unlock()
 
@@ -54,9 +54,8 @@ func (stats *GitStats) IncrementCounter(operation string, repoPath string) {
 
 // concurrent git operations
 func CheckoutRepositories(repositories []Repository, stats *GitStats) {
-
 	var wg sync.WaitGroup
-	semaphore := make(chan struct{}, config.Concurrency)
+	semaphore := make(chan struct{}, globalConfig.Concurrency)
 
 	for _, repo := range repositories {
 		wg.Add(1)
@@ -79,67 +78,67 @@ func CheckoutRepositories(repositories []Repository, stats *GitStats) {
 // manage single repo
 func processRepository(repo Repository) GitOperationResult {
 	repoName := string(repo.PathWithNamespace)
-	repoDestination := filepath.Join(config.Destination, repoName)
+	repoDestination := filepath.Join(globalConfig.Destination, repoName)
 
 	logger.Print("Starting on repository: "+repoName, nil)
 
-	// check repo status
-	status, err := checkRepositoryStatus(repoDestination)
+	// check if repo exists
+	_, err := git.PlainOpen(repoDestination)
 	if err != nil {
+		if err == git.ErrRepositoryNotExists {
+			// repo doesn't exist, clone it
+			gitURL := buildGitURL(repoName)
+			return cloneRepository(repoName, repoDestination, gitURL)
+		}
 		return GitOperationResult{
 			RepoName:  repoName,
 			Operation: "error",
-			Error:     fmt.Errorf("checking repository status: %w", err),
+			Error:     fmt.Errorf("opening repository: %w", err),
 		}
 	}
 
-	gitURL := buildGitURL(repoName)
-
-	switch {
-	case strings.Contains(status, "No such file or directory"):
-		return cloneRepository(repoName, repoDestination, gitURL)
-	case strings.Contains(status, gitURL):
-		return pullRepository(repoName, repoDestination)
-	default:
-		return GitOperationResult{
-			RepoName:  repoName,
-			Operation: "error",
-			Error:     fmt.Errorf("unexpected repository status: %s", status),
-		}
-	}
+	// repo exists, pull it
+	return pullRepository(repoName, repoDestination)
 }
 
-// check repo status
-func checkRepositoryStatus(repoDestination string) (string, error) {
-	cmd := exec.Command("git", "-C", repoDestination, "remote", "-v")
-	output, err := cmd.CombinedOutput()
-
-	// If directory doesn't exist, that's expected for new clones
-	if err != nil && strings.Contains(string(output), "No such file or directory") {
-		return string(output), nil
-	}
-
-	return string(output), err
-}
-
-// craft git url with auth
+// craft git url without auth (auth handled separately)
 func buildGitURL(repoName string) string {
-	return fmt.Sprintf("https://%s-token:%s@%s/%s.git",
-		config.GitBackend, config.GitToken, config.GitHost, repoName)
+	return fmt.Sprintf("https://%s/%s.git", globalConfig.GitHost, repoName)
+}
+
+// create auth method
+func getAuth() *http.BasicAuth {
+	return &http.BasicAuth{
+		Username: globalConfig.GitBackend + "-token",
+		Password: globalConfig.GitToken,
+	}
 }
 
 // clone new repository
 func cloneRepository(repoName, repoDestination, gitURL string) GitOperationResult {
 	logger.Print("Cloning repository: "+repoName, nil)
 
-	cmd := exec.Command("git", "clone", gitURL, repoDestination)
-	output, err := cmd.CombinedOutput()
+	// ensure parent directory exists
+	parentDir := filepath.Dir(repoDestination)
+	if err := os.MkdirAll(parentDir, 0755); err != nil {
+		return GitOperationResult{
+			RepoName:  repoName,
+			Operation: "error",
+			Error:     fmt.Errorf("creating parent directory: %w", err),
+		}
+	}
+
+	_, err := git.PlainClone(repoDestination, &git.CloneOptions{
+		URL:      gitURL,
+		Auth:     getAuth(),
+		Progress: nil,
+	})
 
 	if err != nil {
 		return GitOperationResult{
 			RepoName:  repoName,
 			Operation: "error",
-			Error:     fmt.Errorf("cloning repository: %w, output: %s", err, string(output)),
+			Error:     fmt.Errorf("cloning repository: %w", err),
 		}
 	}
 
@@ -158,27 +157,77 @@ func cloneRepository(repoName, repoDestination, gitURL string) GitOperationResul
 func pullRepository(repoName, repoDestination string) GitOperationResult {
 	logger.Print("Pulling repository: "+repoName, nil)
 
-	// Find remote
-	remote, err := findRemote(repoDestination)
+	// open repository
+	repo, err := git.PlainOpen(repoDestination)
 	if err != nil {
 		return GitOperationResult{
 			RepoName:  repoName,
 			Operation: "error",
-			Error:     fmt.Errorf("finding remote: %w", err),
+			Error:     fmt.Errorf("opening repository: %w", err),
+		}
+	}
+
+	// update remote URL with current token (in case token changed)
+	gitURL := buildGitURL(repoName)
+	if err := updateRemoteURL(repoDestination, gitURL); err != nil {
+		logger.Print("WARNING: failed to update remote URL: "+err.Error(), nil)
+	}
+
+	// get worktree
+	worktree, err := repo.Worktree()
+	if err != nil {
+		return GitOperationResult{
+			RepoName:  repoName,
+			Operation: "error",
+			Error:     fmt.Errorf("getting worktree: %w", err),
+		}
+	}
+
+	// check for uncommitted/unstaged changes
+	status, err := worktree.Status()
+	if err != nil {
+		return GitOperationResult{
+			RepoName:  repoName,
+			Operation: "error",
+			Error:     fmt.Errorf("checking status: %w", err),
+		}
+	}
+
+	if !status.IsClean() {
+		// determine error type
+		errorType := "unstaged"
+		for _, s := range status {
+			if s.Staging != git.Unmodified {
+				errorType = "uncommitted"
+				break
+			}
+		}
+
+		return GitOperationResult{
+			RepoName:  repoName,
+			Operation: "error",
+			Error:     fmt.Errorf("repository has local changes"),
+			ErrorType: errorType,
 		}
 	}
 
 	// pull changes
-	cmd := exec.Command("git", "-C", repoDestination, "pull", remote)
-	output, err := cmd.CombinedOutput()
+	err = worktree.Pull(&git.PullOptions{
+		Auth:     getAuth(),
+		Progress: nil,
+	})
 
 	if err != nil {
-		errorType := classifyPullError(string(output))
-		return GitOperationResult{
-			RepoName:  repoName,
-			Operation: "error",
-			Error:     fmt.Errorf("pulling repository: %w, output: %s", err, string(output)),
-			ErrorType: errorType,
+		if err == git.NoErrAlreadyUpToDate {
+			// not an error, just already up to date
+			logger.Print("Repository already up to date: "+repoName, nil)
+		} else {
+			return GitOperationResult{
+				RepoName:  repoName,
+				Operation: "error",
+				Error:     fmt.Errorf("pulling repository: %w", err),
+				ErrorType: "other",
+			}
 		}
 	}
 
@@ -193,73 +242,51 @@ func pullRepository(repoName, repoDestination string) GitOperationResult {
 	}
 }
 
-// find remote for repo
-func findRemote(repoDestination string) (string, error) {
-	cmd := exec.Command("git", "-C", repoDestination, "remote", "show")
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", fmt.Errorf("getting remote: %w", err)
-	}
-
-	remotes := strings.Split(strings.TrimSpace(string(output)), "\n")
-	if len(remotes) == 0 {
-		return "", fmt.Errorf("no remotes found")
-	}
-
-	return remotes[0], nil
-}
-
-// manage pull error
-func classifyPullError(output string) string {
-	switch {
-	case strings.Contains(output, "You have unstaged changes"):
-		return "unstaged"
-	case strings.Contains(output, "Your index contains uncommitted changes"):
-		return "uncommitted"
-	default:
-		return "other"
-	}
-}
-
 // set git user config
 func setGitUserConfig(repoName, repoDestination string) error {
-
-	// git user name
-	if err := setGitUserName(repoName, repoDestination); err != nil {
-		return fmt.Errorf("setting username: %w", err)
+	repo, err := git.PlainOpen(repoDestination)
+	if err != nil {
+		return fmt.Errorf("opening repository: %w", err)
 	}
 
-	// git user mail
-	if err := setGitUserEmail(repoName, repoDestination); err != nil {
-		return fmt.Errorf("setting email: %w", err)
+	cfg, err := repo.Config()
+	if err != nil {
+		return fmt.Errorf("getting config: %w", err)
 	}
 
+	cfg.User.Name = globalConfig.GitUserName
+	cfg.User.Email = globalConfig.GitUserMail
+
+	if err := repo.SetConfig(cfg); err != nil {
+		return fmt.Errorf("setting config: %w", err)
+	}
+
+	logger.Print("Set git user config for: "+repoName, nil)
 	return nil
 }
 
-// set git user name
-func setGitUserName(repoName, repoDestination string) error {
-
-	cmd := exec.Command("git", "-C", repoDestination, "config", "user.name", config.GitUserName)
-	output, err := cmd.CombinedOutput()
+// update remote URL with current token
+func updateRemoteURL(repoDestination, gitURL string) error {
+	repo, err := git.PlainOpen(repoDestination)
 	if err != nil {
-		return fmt.Errorf("setting git username: %w, output: %s", err, string(output))
+		return fmt.Errorf("opening repository: %w", err)
 	}
 
-	logger.Print("Set git username for: "+repoName, nil)
-	return nil
-}
-
-// set git user mail
-func setGitUserEmail(repoName, repoDestination string) error {
-
-	cmd := exec.Command("git", "-C", repoDestination, "config", "user.email", config.GitUserMail)
-	output, err := cmd.CombinedOutput()
+	cfg, err := repo.Config()
 	if err != nil {
-		return fmt.Errorf("setting git email: %w, output: %s", err, string(output))
+		return fmt.Errorf("getting config: %w", err)
 	}
 
-	logger.Print("Set git email for: "+repoName, nil)
+	// update first remote's URL
+	for name := range cfg.Remotes {
+		cfg.Remotes[name].URLs = []string{gitURL}
+		break
+	}
+
+	if err := repo.SetConfig(cfg); err != nil {
+		return fmt.Errorf("setting config: %w", err)
+	}
+
 	return nil
 }
 
@@ -291,7 +318,7 @@ func handleResult(result GitOperationResult, stats *GitStats) {
 	}
 
 	// update progress bar
-	if !config.Debug {
+	if !globalConfig.Debug {
 		_ = bar.Add(1)
 	}
 }

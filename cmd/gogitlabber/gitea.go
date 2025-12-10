@@ -47,11 +47,10 @@ func NewGiteaClient(baseURL, token string) *GiteaClient {
 
 // fetch gitea repos
 func FetchRepositoriesGitea() ([]Repository, error) {
-	client := NewGiteaClient(config.GitHost, config.GitToken)
-
+	client := NewGiteaClient(globalConfig.GitHost, globalConfig.GitToken)
 	options := GiteaAPIOptions{
 		Visibility:      "all",
-		IncludeArchived: config.IncludeArchived,
+		IncludeArchived: globalConfig.IncludeArchived,
 		Sort:            "alpha",
 		Limit:           100,
 		Page:            1,

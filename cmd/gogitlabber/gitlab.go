@@ -63,11 +63,10 @@ func NewGitLabClient(baseURL, token string) *GitLabClient {
 
 // fetch gitlab repos
 func FetchRepositoriesGitLab() ([]Repository, error) {
-	client := NewGitLabClient(config.GitHost, config.GitToken)
-
+	client := NewGitLabClient(globalConfig.GitHost, globalConfig.GitToken)
 	options := GitLabAPIOptions{
 		Membership:      true,
-		IncludeArchived: config.IncludeArchived,
+		IncludeArchived: globalConfig.IncludeArchived,
 		OrderBy:         "name",
 		Sort:            "asc",
 		PerPage:         100,

@@ -8,7 +8,7 @@ import (
 
 // version
 var version string
-var config *Config
+var globalConfig *Config
 
 // repository data
 type Repository struct {
@@ -19,37 +19,31 @@ type Repository struct {
 func main() {
 
 	// set app version
-	version = "2.2.2"
+	version = "3.0.0"
 
 	// set appname for logger
 	logger.SetAppName("gogitlabber")
 
 	// manage all argument magic and load configuration
-	config = manageArguments()
+	globalConfig = manageArguments()
 
 	// set debugging
-	logger.SetDebug(config.Debug)
-
-	// check for git
-	err := verifyGitAvailable()
-	if err != nil {
-		logger.Fatal("VALIDATION: git not found in path", err)
-	}
-	logger.Print("VALIDATION: git found in path", nil)
+	logger.SetDebug(globalConfig.Debug)
 
 	// validate git backend is set
-	if config.GitBackend == "" {
+	if globalConfig.GitBackend == "" {
 		logger.Fatal("Configuration error: git_backend is required (gitlab|gitea)", nil)
 	}
 
 	// make initial progressbar
-	if !config.Debug {
+	if !globalConfig.Debug {
 		progressBar()
 	}
 
 	// fetch repository information
 	var repositories []Repository
-	switch config.GitBackend {
+	var err error
+	switch globalConfig.GitBackend {
 	case "gitea":
 		repositories, err = FetchRepositoriesGitea()
 		if err != nil {
@@ -61,7 +55,7 @@ func main() {
 			logger.Fatal("Fetching repositories failed", err)
 		}
 	default:
-		logger.Fatal(fmt.Sprintf("Unsupported git backend: %s (supported: gitlab|gitea)", config.GitBackend), nil)
+		logger.Fatal(fmt.Sprintf("Unsupported git backend: %s (supported: gitlab|gitea)", globalConfig.GitBackend), nil)
 	}
 
 	// manage found repositories

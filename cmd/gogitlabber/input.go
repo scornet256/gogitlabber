@@ -63,8 +63,8 @@ func expandPath(path string) string {
 
 // loadconfig from yaml file
 func loadConfig(configPath string) (*Config, error) {
-	config := &Config{}
-	config.setDefaults()
+	cfg := &Config{}
+	cfg.setDefaults()
 
 	// check if config file exists
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
@@ -78,11 +78,11 @@ func loadConfig(configPath string) (*Config, error) {
 	}
 
 	// parse yaml
-	if err := yaml.Unmarshal(data, config); err != nil {
+	if err := yaml.Unmarshal(data, cfg); err != nil {
 		return nil, fmt.Errorf("failed to parse config file: %w", err)
 	}
 
-	return config, nil
+	return cfg, nil
 }
 
 // validateConfig validates the configuration values
@@ -147,11 +147,6 @@ func manageArguments() *Config {
 
 	flag.Parse()
 
-	// override debug setting if flag is set
-	if *debugFlag {
-		config.Debug = true
-	}
-
 	if *versionFlag {
 		fmt.Println(version)
 		os.Exit(0)
@@ -160,23 +155,28 @@ func manageArguments() *Config {
 	configPath := *configFileFlag
 
 	// Load configuration from YAML file
-	config, err := loadConfig(configPath)
+	cfg, err := loadConfig(configPath)
 	if err != nil {
 		flag.Usage()
 		logger.Fatal("Configuration error: "+err.Error(), nil)
 	}
 
+	// override debug setting if flag is set
+	if *debugFlag {
+		cfg.Debug = true
+	}
+
 	// Process configuration
-	config.processConfig()
+	cfg.processConfig()
 
 	// Validate configuration
-	if err := config.validateConfig(); err != nil {
+	if err := cfg.validateConfig(); err != nil {
 		flag.Usage()
 		logger.Fatal("Configuration validation error: "+err.Error(), nil)
 	}
 
 	// Log configuration
-	config.logConfig(configPath)
+	cfg.logConfig(configPath)
 
-	return config
+	return cfg
 }

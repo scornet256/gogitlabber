@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/go-git/go-git/v6"
-	"github.com/go-git/go-git/v6/plumbing/transport/http"
 	"github.com/scornet256/go-logger"
 )
 
@@ -101,17 +100,10 @@ func processRepository(repo Repository) GitOperationResult {
 	return pullRepository(repoName, repoDestination)
 }
 
-// craft git url without auth (auth handled separately)
+// craft git url with auth embedded (for remote URL storage)
 func buildGitURL(repoName string) string {
-	return fmt.Sprintf("https://%s/%s.git", globalConfig.GitHost, repoName)
-}
-
-// create auth method
-func getAuth() *http.BasicAuth {
-	return &http.BasicAuth{
-		Username: globalConfig.GitBackend + "-token",
-		Password: globalConfig.GitToken,
-	}
+	return fmt.Sprintf("https://%s-token:%s@%s/%s.git",
+		globalConfig.GitBackend, globalConfig.GitToken, globalConfig.GitHost, repoName)
 }
 
 // clone new repository
@@ -130,7 +122,6 @@ func cloneRepository(repoName, repoDestination, gitURL string) GitOperationResul
 
 	_, err := git.PlainClone(repoDestination, &git.CloneOptions{
 		URL:      gitURL,
-		Auth:     getAuth(),
 		Progress: nil,
 	})
 
@@ -213,7 +204,6 @@ func pullRepository(repoName, repoDestination string) GitOperationResult {
 
 	// pull changes
 	err = worktree.Pull(&git.PullOptions{
-		Auth:     getAuth(),
 		Progress: nil,
 	})
 

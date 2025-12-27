@@ -3,9 +3,11 @@ module gogitlabber
 go 1.24.0
 
 require (
+	github.com/go-git/go-git/v6 v6.0.0-20251210072406-9b5f6428e1da
 	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213
-	github.com/schollz/progressbar/v3 v3.18.0
+	github.com/schollz/progressbar/v3 v3.19.0
 	github.com/scornet256/go-logger v0.0.2
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -20,7 +22,6 @@ require (
 	github.com/go-git/go-billy/v5 v5.6.2 // indirect
 	github.com/go-git/go-billy/v6 v6.0.0-20251126203821-7f9c95185ee0 // indirect
 	github.com/go-git/go-git/v5 v5.16.4 // indirect
-	github.com/go-git/go-git/v6 v6.0.0-20251210072406-9b5f6428e1da // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/kevinburke/ssh_config v1.4.0 // indirect
@@ -37,5 +38,4 @@ require (
 	golang.org/x/sys v0.39.0 // indirect
 	golang.org/x/term v0.38.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

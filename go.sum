@@ -28,10 +28,14 @@ github.com/go-git/go-billy/v5 v5.6.2 h1:6Q86EsPXMa7c3YZ3aLAQsMA0VlWmy43r6FHqa/UN
 github.com/go-git/go-billy/v5 v5.6.2/go.mod h1:rcFC2rAsp/erv7CMz9GczHcuD0D32fWzH+MJAU+jaUU=
 github.com/go-git/go-billy/v6 v6.0.0-20251126203821-7f9c95185ee0 h1:eY5aB2GXiVdgTueBcqsBt53WuJTRZAuCdIS/86Pcq5c=
 github.com/go-git/go-billy/v6 v6.0.0-20251126203821-7f9c95185ee0/go.mod h1:0NjwVNrwtVFZBReAp5OoGklGJIgJFEbVyHneAr4lc8k=
+github.com/go-git/go-billy/v6 v6.0.0-20251209065551-8afc3eb64e4d h1:nfZPVEha54DwXl8twSNxi9J8edIiqfpSvnq/mGPfgc4=
+github.com/go-git/go-billy/v6 v6.0.0-20251209065551-8afc3eb64e4d/go.mod h1:d3XQcsHu1idnquxt48kAv+h+1MUiYKLH/e7LAzjP+pI=
 github.com/go-git/go-git/v5 v5.16.4 h1:7ajIEZHZJULcyJebDLo99bGgS0jRrOxzZG4uCk2Yb2Y=
 github.com/go-git/go-git/v5 v5.16.4/go.mod h1:4Ge4alE/5gPs30F2H1esi2gPd69R0C39lolkucHBOp8=
 github.com/go-git/go-git/v6 v6.0.0-20251210072406-9b5f6428e1da h1:ch21RnknyB1dYlWSpomdW3pXNcQZJtrtDi8wz5up31s=
 github.com/go-git/go-git/v6 v6.0.0-20251210072406-9b5f6428e1da/go.mod h1:XY/p4VJq0DwOVAAs+58NpHcQrqwHDEzMv4g8MBK7ZVA=
+github.com/go-git/go-git/v6 v6.0.0-20251224103503-78aff6aa5ea9 h1:cDz7iq3eC2Z6Ar7uXu+kVn462YN9oeZf6PdKBLdraYE=
+github.com/go-git/go-git/v6 v6.0.0-20251224103503-78aff6aa5ea9/go.mod h1:6/GwPRGuHWD9vPvvAJv1xb8RIHkKSMTT0GI9JhBo8Sw=
 github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 h1:f+oWsMOmNPc8JmEHVZIycC7hBoQxHH9pNKQORJNozsQ=
 github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8/go.mod h1:wcDNUvekVysuuOpQKo3191zZyTpiI6se1N1ULghS0sw=
 github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 h1:BQSFePA1RWJOlocH6Fxy8MmwDt+yVQYULKfN0RoTN8A=

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/scornet256/go-logger"
@@ -135,7 +136,7 @@ func (c *GiteaClient) fetchRepositoryPage(ctx context.Context, options GiteaAPIO
 	}
 
 	// check for more pages
-	hasMore := len(giteaRepos) == options.Limit
+	hasMore := strings.Contains(resp.Header.Get("Link"), `rel="next"`)
 
 	return giteaRepos, hasMore, nil
 }

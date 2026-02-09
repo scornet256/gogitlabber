@@ -3,7 +3,7 @@ module gogitlabber
 go 1.24.0
 
 require (
-	github.com/go-git/go-git/v6 v6.0.0-20260206150416-f623c7555599
+	github.com/go-git/go-git/v6 v6.0.0-20260209124828-a06215dae685
 	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213
 	github.com/schollz/progressbar/v3 v3.19.0
 	github.com/scornet256/go-logger v0.0.2

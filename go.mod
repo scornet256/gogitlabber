@@ -3,7 +3,7 @@ module gogitlabber
 go 1.24.0
 
 require (
-	github.com/go-git/go-git/v6 v6.0.0-20260313060634-1806f66546f6
+	github.com/go-git/go-git/v6 v6.0.0-20260313081548-799bb393a8ed
 	github.com/k0kubun/go-ansi v0.0.0-20180517002512-3bf9e2903213
 	github.com/schollz/progressbar/v3 v3.19.0
 	github.com/scornet256/go-logger v0.0.2
@@ -35,6 +35,7 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/net v0.50.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/term v0.40.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect

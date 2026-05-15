@@ -1,0 +1,14 @@
+---
+when:
+  - event: "push"
+    branch: "main"
+  - event: "manual"
+
+steps:
+
+  # gitleaks
+  - name: "gitleaks"
+    # renovate: datasource=github-releases depName=gitleaks/gitleaks
+    image: "cr.simoncor.net/ghcr/gitleaks/gitleaks:v8.30.1"
+    commands:
+      - "gitleaks detect --source . --verbose --redact"

@@ -35,7 +35,7 @@ steps:
     depends_on:
       - "testing"
     environment:
-      FORGEJO_TOKEN:
+      GITEA_TOKEN:
         from_secret: "goreleaser_forgejo_token"
     commands:
       - "goreleaser release --clean"

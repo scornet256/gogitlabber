@@ -1,5 +1,4 @@
 ---
-
 clone:
   - name: "clone"
     image: "woodpeckerci/plugin-git"
@@ -9,27 +8,32 @@ clone:
 
 steps:
 
-  # lintint
   - name: "linting"
     image: "cr.simoncor.net/dockerhub/golangci/golangci-lint:v2.1-alpine"
     commands:
       - "golangci-lint run"
+    when:
+      - event:
+          - "push"
+          - "pull_request"
+          - "tag"
 
-  # testing
   - name: "testing"
     image: "registry.gitlab.simoncor.net/oci/go-build:v25.06.03"
     depends_on:
       - "linting"
     commands:
       - "go test ./..."
+    when:
+      - event:
+          - "push"
+          - "pull_request"
+          - "tag"
 
-  # releasing
   - name: "releasing"
     image: "cr.simoncor.net/dockerhub/goreleaser/goreleaser:v2.10.2"
     depends_on:
       - "testing"
-    secrets:
-      - "goreleaser_forgejo_token"
     environment:
       FORGEJO_TOKEN:
         from_secret: "goreleaser_forgejo_token"

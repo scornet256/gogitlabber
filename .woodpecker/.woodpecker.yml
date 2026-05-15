@@ -10,16 +10,16 @@ clone:
 steps:
 
   # lintint
-  - name: "golang-lint"
+  - name: "linting"
     image: "cr.simoncor.net/dockerhub/golangci/golangci-lint:v2.1-alpine"
     commands:
       - "golangci-lint run"
 
   # testing
-  - name: "go-test"
+  - name: "testing"
     image: "registry.gitlab.simoncor.net/oci/go-build:v25.06.03"
     depends_on:
-      - "golang-lint"
+      - "linting"
     commands:
       - "go test ./..."
 
@@ -27,7 +27,7 @@ steps:
   - name: "releasing"
     image: "cr.simoncor.net/dockerhub/goreleaser/goreleaser:v2.10.2"
     depends_on:
-      - "go-test"
+      - "testing"
     secrets:
       - "goreleaser_forgejo_token"
     environment:

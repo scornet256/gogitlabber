@@ -43,8 +43,8 @@ changelog:
     - title: "📖 Documentation"
       regexp: "^docs"
 
-# gitlab
-gitlab_urls:
-  api: "https://gitlab.simoncor.net/api/v4/"
-  download: "https://gitlab.simoncor.net"
-  use_package_registry: true
+# gitea/forgejo
+gitea_urls:
+  api: "https://git.simoncor.net/api/v1"
+  download: "https://git.simoncor.net"
+  skip_tls_verify: false

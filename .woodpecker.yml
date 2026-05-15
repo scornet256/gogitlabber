@@ -1,0 +1,27 @@
+---
+
+steps:
+  golang-lint:
+    image: "cr.simoncor.net/dockerhub/golangci/golangci-lint:v2.1-alpine"
+    commands:
+      - "golangci-lint run"
+
+  go-test:
+    image: "registry.gitlab.simoncor.net/oci/go-build:v25.06.03"
+    depends_on:
+      - "golang-lint"
+    commands:
+      - "go test ./..."
+
+  releasing:
+    image: "cr.simoncor.net/dockerhub/goreleaser/goreleaser:v2.10.2"
+    depends_on:
+      - "go-test"
+    secrets:
+      - "goreleaser_forgejo_token"
+    environment:
+      - "FORGEJO_TOKEN=$GORELEASER_FORGEJO_TOKEN"
+    commands:
+      - "goreleaser release --clean"
+    when:
+      event: "tag"

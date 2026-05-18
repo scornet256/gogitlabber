@@ -1,15 +1,9 @@
 ---
-clone:
-  - name: "clone"
-    image: "woodpeckerci/plugin-git"
-    settings:
-      depth: 0
-      tags: true
 
 steps:
 
   - name: "linting"
-    image: "cr.simoncor.net/dockerhub/golangci/golangci-lint:v2.1-alpine"
+    image: "cr.simoncor.net/dockerhub/golangci/golangci-lint:v2.12.2-alpine"
     commands:
       - "golangci-lint run"
     when:

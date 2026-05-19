@@ -13,7 +13,7 @@ steps:
           - "tag"
 
   - name: "testing"
-    image: "registry.gitlab.simoncor.net/oci/go-build:v25.06.03"
+    image: "cr.simoncor.net/go-build:latest"
     depends_on:
       - "linting"
     commands:

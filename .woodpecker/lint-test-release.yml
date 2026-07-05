@@ -25,7 +25,7 @@ steps:
           - "tag"
 
   - name: "releasing"
-    image: "cr.simoncor.net/dockerhub/goreleaser/goreleaser:v2.16.0"
+    image: "cr.simoncor.net/dockerhub/goreleaser/goreleaser:v2.17.0"
     depends_on:
       - "testing"
     environment:

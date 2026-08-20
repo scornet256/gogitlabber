@@ -3,7 +3,7 @@
 steps:
 
   - name: "linting"
-    image: "cr.simoncor.net/dockerhub/golangci/golangci-lint:v2.13.0-alpine"
+    image: "cr.simoncor.net/dockerhub/golangci/golangci-lint:v2.13.1-alpine"
     commands:
       - "golangci-lint run"
     when:

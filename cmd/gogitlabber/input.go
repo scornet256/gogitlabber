@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +13,8 @@ import (
 	"github.com/scornet256/go-logger"
 	"gopkg.in/yaml.v3"
 )
+
+const defaultConfigPath = "~/.config/gogitlabber.yaml"
 
 // config struct for config
 type Config struct {
@@ -24,106 +29,95 @@ type Config struct {
 	IncludeArchived string `yaml:"include_archived"`
 }
 
-// setdefaults sets default values for the configuration
-func (conf *Config) setDefaults() {
-	conf.Concurrency = 15
-	conf.Debug = false
-	conf.Destination = "$HOME/Documents"
-	conf.GitBackend = ""
-	conf.GitHost = "gitlab.com"
-	conf.GitToken = ""
-	conf.GitUserMail = ""
-	conf.GitUserName = ""
-	conf.IncludeArchived = "excluded"
+// default configuration values
+func defaultConfig() *Config {
+	return &Config{
+		Concurrency:     15,
+		Destination:     "$HOME/Documents",
+		GitHost:         "gitlab.com",
+		IncludeArchived: "excluded",
+	}
 }
 
-// expand variable paths
+// expand environment variables and ~ in paths
 func expandPath(path string) string {
-
-	// expand environment variables like $home
 	expanded := os.ExpandEnv(path)
 
-	// expand ~
-	if strings.HasPrefix(expanded, "~/") {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return expanded
+	if expanded == "~" || strings.HasPrefix(expanded, "~/") {
+		if homeDir, err := os.UserHomeDir(); err == nil {
+			expanded = filepath.Join(homeDir, expanded[1:])
 		}
-		expanded = filepath.Join(homeDir, expanded[2:])
-	} else if expanded == "~" {
-		homeDir, err := os.UserHomeDir()
-		if err != nil {
-			return expanded
-		}
-		expanded = homeDir
 	}
 
 	return filepath.Clean(expanded)
 }
 
-// loadconfig from yaml file
+// load config from yaml file; unknown keys are rejected to catch typos
 func loadConfig(configPath string) (*Config, error) {
-	cfg := &Config{}
-	cfg.setDefaults()
+	cfg := defaultConfig()
 
-	// check if config file exists
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("config file not found: %s", configPath)
-	}
-
-	// read config
 	data, err := os.ReadFile(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read config file: %w", err)
+		return nil, fmt.Errorf("reading config file: %w", err)
 	}
 
-	// parse yaml
-	if err := yaml.Unmarshal(data, cfg); err != nil {
-		return nil, fmt.Errorf("failed to parse config file: %w", err)
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true)
+	if err := decoder.Decode(cfg); err != nil && !errors.Is(err, io.EOF) {
+		return nil, fmt.Errorf("parsing config file %s: %w", configPath, err)
 	}
 
 	return cfg, nil
 }
 
-// validateConfig validates the configuration values
+// validate the configuration values
 func (conf *Config) validateConfig() error {
-	// validate required parameters
-	if conf.GitToken == "" {
-		return fmt.Errorf("git_token is required")
+	switch conf.GitBackend {
+	case "gitlab", "gitea":
+	case "":
+		return errors.New("git_backend is required (gitlab|gitea)")
+	default:
+		return fmt.Errorf("unsupported git_backend: %s (must be gitlab|gitea)", conf.GitBackend)
 	}
 
-	// validate archived option
+	if conf.GitHost == "" {
+		return errors.New("git_host is required")
+	}
+
+	if conf.GitToken == "" {
+		return errors.New("git_token is required")
+	}
+
 	switch conf.IncludeArchived {
-	case "any", "exclusive", "excluded":
+	case "any", "excluded", "exclusive":
 	default:
 		return fmt.Errorf("invalid include_archived option: %s (must be any|excluded|exclusive)", conf.IncludeArchived)
 	}
 
-	// validate concurrency
 	if conf.Concurrency < 1 {
-		return fmt.Errorf("concurrency must be greater than 0")
+		return errors.New("concurrency must be greater than 0")
 	}
 
 	return nil
 }
 
-// process config after loading
+// normalize config after loading
 func (conf *Config) processConfig() {
-	// expand path variables
 	conf.Destination = expandPath(conf.Destination)
 
-	// add trailing slash if not provided
-	if !strings.HasSuffix(conf.Destination, "/") {
-		conf.Destination += "/"
-	}
+	// accept git_host with scheme or trailing slash
+	conf.GitHost = strings.TrimPrefix(conf.GitHost, "https://")
+	conf.GitHost = strings.TrimPrefix(conf.GitHost, "http://")
+	conf.GitHost = strings.TrimSuffix(conf.GitHost, "/")
 }
 
 // log active config
 func (conf *Config) logConfig(configPath string) {
 	logger.Print("Configuration: Using config file: "+configPath, nil)
+	logger.Print("Configuration: Using backend: "+conf.GitBackend, nil)
 	logger.Print("Configuration: Using host: "+conf.GitHost, nil)
 	logger.Print("Configuration: Using destination: "+conf.Destination, nil)
-	logger.Print("Configuration: Using concurrency: "+fmt.Sprintf("%d", conf.Concurrency), nil)
+	logger.Print(fmt.Sprintf("Configuration: Using concurrency: %d", conf.Concurrency), nil)
 	logger.Print("Configuration: Using archived option: "+conf.IncludeArchived, nil)
 	if conf.Debug {
 		logger.Print("Configuration: Debug mode enabled", nil)
@@ -132,16 +126,10 @@ func (conf *Config) logConfig(configPath string) {
 
 // manage arguments
 func manageArguments() *Config {
-
-	// default config path
-	defaultConfigPath := "./$HOME./.config/gogitlabber.yaml"
-
-	// Define only the config file flag
 	configFileFlag := flag.String(
 		"config",
 		defaultConfigPath,
 		"Specify config file path (YAML)\n  example: -config=./config/app.yaml")
-
 	versionFlag := flag.Bool("version", false, "Print the version and exit")
 	debugFlag := flag.Bool("debug", false, "Enable debug mode")
 
@@ -152,13 +140,12 @@ func manageArguments() *Config {
 		os.Exit(0)
 	}
 
-	configPath := *configFileFlag
+	configPath := expandPath(*configFileFlag)
 
-	// Load configuration from YAML file
 	cfg, err := loadConfig(configPath)
 	if err != nil {
 		flag.Usage()
-		logger.Fatal("Configuration error: "+err.Error(), nil)
+		fatal("configuration error", err)
 	}
 
 	// override debug setting if flag is set
@@ -166,16 +153,13 @@ func manageArguments() *Config {
 		cfg.Debug = true
 	}
 
-	// Process configuration
 	cfg.processConfig()
 
-	// Validate configuration
 	if err := cfg.validateConfig(); err != nil {
 		flag.Usage()
-		logger.Fatal("Configuration validation error: "+err.Error(), nil)
+		fatal("configuration validation error", err)
 	}
 
-	// Log configuration
 	cfg.logConfig(configPath)
 
 	return cfg

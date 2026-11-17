@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/k0kubun/go-ansi"
 	"github.com/schollz/progressbar/v3"
 	"github.com/scornet256/go-logger"
@@ -11,8 +12,6 @@ var bar *progressbar.ProgressBar
 
 // make progressbar
 func progressBar() {
-
-	// configure progressbar
 	bar = progressbar.NewOptions(100,
 		progressbar.OptionEnableColorCodes(true),
 		progressbar.OptionSetDescription("..."),
@@ -34,88 +33,48 @@ func progressBar() {
 	logger.Print("Initialize progressbar", nil)
 }
 
-// update progressbar
+// set progressbar maximum to the number of repositories
 func updateProgressBar(repoCount int) error {
-	if globalConfig.Debug {
-		return nil // Skip progress bar in debug mode
+	if bar == nil {
+		return nil
 	}
-	logger.Print("Resetting progress bar", nil)
 	if err := bar.Set(0); err != nil {
 		return fmt.Errorf("resetting progress bar: %w", err)
 	}
-	logger.Print("Setting progress bar maximum", nil)
 	bar.ChangeMax(repoCount)
 	return nil
 }
 
-// print summary
-func printSummary(stats *GitStats) {
-	// print stats
-	fmt.Println("")
-	fmt.Printf(
-		"Summary:\n"+
-			" Cloned repositories: %v\n"+
-			" Pulled repositories: %v\n"+
-			" Errors: %v\n\n",
-		stats.clonedCount,
-		stats.pulledCount,
-		stats.errorCount,
-	)
-}
-
-// print pull errors unstaged
-func printPullErrorUnstaged(stats *GitStats) {
-	if len(stats.pullErrorMsgUnstaged) > 0 {
-		fmt.Println("Repositories with unstaged changes:")
-		for _, repo := range stats.pullErrorMsgUnstaged {
-			fmt.Printf("• %s has unstaged changes.\n", repo)
-		}
-		fmt.Println()
+// print a titled list, skipped when empty
+func printList(title, format string, items []string) {
+	if len(items) == 0 {
+		return
 	}
-}
-
-// print pull errors uncommited
-func printPullErrorUncommitted(stats *GitStats) {
-	if len(stats.pullErrorMsgUncommitted) > 0 {
-		fmt.Println("Repositories with uncommitted changes:")
-		for _, repo := range stats.pullErrorMsgUncommitted {
-			fmt.Printf("• %s has uncommitted changes.\n", repo)
-		}
-		fmt.Println()
+	fmt.Println(title)
+	for _, item := range items {
+		fmt.Printf(format, item)
 	}
-}
-
-// print all errors
-func printAllErrors(stats *GitStats) {
-	printPullErrorUnstaged(stats)
-	printPullErrorUncommitted(stats)
-	printGeneralErrors(stats)
-}
-
-// print general errors
-func printGeneralErrors(stats *GitStats) {
-	if len(stats.generalErrors) > 0 {
-		fmt.Println("Repositories with errors:")
-		for _, repo := range stats.generalErrors {
-			fmt.Printf("✗ %s failed to process.\n", repo)
-		}
-		fmt.Println()
-	}
-}
-
-// check for errors
-func hasErrors(stats *GitStats) bool {
-	return len(stats.pullErrorMsgUnstaged) > 0 ||
-		len(stats.pullErrorMsgUncommitted) > 0 ||
-		len(stats.generalErrors) > 0
+	fmt.Println()
 }
 
 // print detailed summary
 func printDetailedSummary(stats *GitStats) {
-	printSummary(stats)
+	fmt.Printf(
+		"\nSummary:\n"+
+			" Cloned repositories: %d\n"+
+			" Pulled repositories: %d\n"+
+			" Errors: %d\n\n",
+		stats.cloned,
+		stats.pulled,
+		stats.errorCount(),
+	)
 
-	if hasErrors(stats) {
-		fmt.Println("Error Details:")
-		printAllErrors(stats)
+	if stats.errorCount() == 0 {
+		return
 	}
+
+	fmt.Println("Error Details:")
+	printList("Repositories with unstaged changes:", "• %s has unstaged changes.\n", stats.unstaged)
+	printList("Repositories with uncommitted changes:", "• %s has uncommitted changes.\n", stats.uncommitted)
+	printList("Repositories with errors:", "✗ %s\n", stats.failed)
 }

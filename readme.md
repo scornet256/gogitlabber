@@ -40,11 +40,30 @@ git_user_name: "John Doe"
 include_archived: "excluded"
 ```
 
+| Key                | Required | Default           | Description                                              |
+|--------------------|----------|-------------------|----------------------------------------------------------|
+| `git_backend`      | yes      |                   | `gitlab` or `gitea`                                      |
+| `git_token`        | yes      |                   | API / access token                                       |
+| `git_host`         | no       | `gitlab.com`      | Hostname of the server                                   |
+| `destination`      | no       | `$HOME/Documents` | Directory to clone into; `$VARS` and `~` are expanded    |
+| `concurrency`      | no       | `15`              | Number of repositories processed in parallel             |
+| `include_archived` | no       | `excluded`        | `any`, `excluded` or `exclusive` (only archived)         |
+| `git_user_name`    | no       |                   | Sets `user.name` in each repository when set             |
+| `git_user_mail`    | no       |                   | Sets `user.email` in each repository when set            |
+| `debug`            | no       | `false`           | Verbose logging instead of the progress bar              |
+
+Unknown keys are rejected, so typos are caught early.
+
 ## Usage
 
 ```bash
 gogitlabber -config=~/.config/gogitlabber/gitlab.example.com.yaml
 ```
+
+Without `-config`, `~/.config/gogitlabber.yaml` is used.
+
+Repositories with local changes are skipped and listed in the summary. Only the `origin` remote is updated with the
+current token.
 
 ## Access Token Permissions
 

@@ -49,8 +49,7 @@ jobs:
       - name: "upload sbom to release"
         uses: "softprops/action-gh-release@v3"
         with:
+          token: ${{ secrets.GORELEASER_GITHUB_TOKEN }}
           files: |
             gogitlabber-*-sbom.spdx.json
             gogitlabber-*-sbom.cyclonedx.json
-        env:
-          GITHUB_TOKEN: ${{ secrets.GORELEASER_GITHUB_TOKEN }}

@@ -169,6 +169,73 @@ func TestBuildGitURL(t *testing.T) {
 	}
 }
 
+// a bare remote with one commit on main, plus a clone of it
+func gitFixture(t *testing.T) (remote, clone string) {
+	t.Helper()
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git cli not installed")
+	}
+
+	ctx := context.Background()
+	remote = filepath.Join(t.TempDir(), "remote.git")
+	work := filepath.Join(t.TempDir(), "work")
+	clone = filepath.Join(t.TempDir(), "clone")
+	t.Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
+	t.Setenv("GIT_AUTHOR_NAME", "t")
+	t.Setenv("GIT_AUTHOR_EMAIL", "t@example.com")
+	t.Setenv("GIT_COMMITTER_NAME", "t")
+	t.Setenv("GIT_COMMITTER_EMAIL", "t@example.com")
+
+	for _, args := range [][]string{
+		{"init", "--quiet", "--bare", "--initial-branch=main", remote},
+		{"init", "--quiet", "--initial-branch=main", work},
+		{"-C", work, "commit", "--quiet", "--allow-empty", "-m", "one"},
+		{"-C", work, "push", "--quiet", remote, "main"},
+		{"clone", "--quiet", remote, clone},
+		{"-C", work, "commit", "--quiet", "--allow-empty", "-m", "two"},
+		{"-C", work, "push", "--quiet", remote, "main"},
+	} {
+		if err := runGit(ctx, args...); err != nil {
+			t.Fatal(err)
+		}
+	}
+	return remote, clone
+}
+
+func headOf(t *testing.T, dir string) string {
+	t.Helper()
+	out, err := exec.Command("git", "-C", dir, "rev-parse", "HEAD").Output()
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.TrimSpace(string(out))
+}
+
+func TestPullWithGit(t *testing.T) {
+	remote, clone := gitFixture(t)
+
+	if err := pullWithGit(context.Background(), clone); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := headOf(t, clone), headOf(t, remote); got != want {
+		t.Errorf("head = %s, want %s", got, want)
+	}
+}
+
+func TestPullWithGitWithoutUpstream(t *testing.T) {
+	remote, clone := gitFixture(t)
+	if err := runGit(context.Background(), "-C", clone, "branch", "--unset-upstream"); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := pullWithGit(context.Background(), clone); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := headOf(t, clone), headOf(t, remote); got != want {
+		t.Errorf("head = %s, want %s", got, want)
+	}
+}
+
 func TestRunGitReportsStderr(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git cli not installed")

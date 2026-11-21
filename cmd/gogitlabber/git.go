@@ -150,6 +150,17 @@ func runGit(ctx context.Context, args ...string) error {
 	return nil
 }
 
+// fast-forward pull with the git cli (--ff-only like go-git, and it overrides a global pull.rebase)
+func pullWithGit(ctx context.Context, repoDestination string) error {
+	args := []string{"-C", repoDestination, "pull", "--quiet", "--ff-only", remoteName}
+
+	// without an upstream, pull the remote HEAD like go-git does
+	if runGit(ctx, "-C", repoDestination, "rev-parse", "--verify", "--quiet", "@{upstream}") != nil {
+		args = append(args, "HEAD")
+	}
+	return runGit(ctx, args...)
+}
+
 // clone new repository
 func cloneRepository(ctx context.Context, repoName, repoDestination string) (outcome, error) {
 	logger.Print("Cloning repository: "+repoName, nil)
@@ -206,8 +217,7 @@ func pullRepository(ctx context.Context, gitRepo *git.Repository, repoName, repo
 	}
 
 	if useSSH() {
-		// --ff-only: same as go-git, and overrides a global pull.rebase
-		err = runGit(ctx, "-C", repoDestination, "pull", "--quiet", "--ff-only", remoteName)
+		err = pullWithGit(ctx, repoDestination)
 	} else {
 		err = worktree.PullContext(ctx, &git.PullOptions{RemoteName: remoteName})
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -169,6 +170,10 @@ func TestBuildGitURL(t *testing.T) {
 }
 
 func TestRunGitReportsStderr(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git cli not installed")
+	}
+
 	err := runGit(context.Background(), "-C", t.TempDir(), "pull", "--ff-only", "origin")
 	if err == nil {
 		t.Fatal("expected error outside a repository")

@@ -1,11 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"github.com/go-git/go-git/v6"
@@ -107,13 +110,44 @@ func processRepository(ctx context.Context, repo Repository) (outcome, error) {
 		return outcomeError, fmt.Errorf("opening repository: %w", err)
 	}
 
-	return pullRepository(ctx, gitRepo, repoName)
+	return pullRepository(ctx, gitRepo, repoName, repoDestination)
 }
 
-// craft git url with auth embedded (stored as remote url so plain git works too)
+// craft the remote url: ssh without credentials, or https with the token embedded (so plain git works too)
 func buildGitURL(repoName string) string {
+	if useSSH() {
+		return fmt.Sprintf("ssh://%s@%s:%d/%s.git",
+			globalConfig.GitSSHUser, globalConfig.GitHost, globalConfig.GitSSHPort, repoName)
+	}
 	return fmt.Sprintf("https://%s-token:%s@%s/%s.git",
 		globalConfig.GitBackend, globalConfig.GitToken, globalConfig.GitHost, repoName)
+}
+
+// ssh goes through the git cli, so openssh applies the full ~/.ssh/config (proxyjump, identityfile, known hosts)
+func useSSH() bool {
+	return globalConfig.GitProtocol == "ssh"
+}
+
+// run the git cli without prompts; stderr ends up in the error
+func runGit(ctx context.Context, args ...string) error {
+	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd.Env = append(os.Environ(), "GIT_TERMINAL_PROMPT=0")
+
+	// fail instead of asking for a passphrase or host key behind the progress bar
+	if os.Getenv("GIT_SSH_COMMAND") == "" {
+		cmd.Env = append(cmd.Env, "GIT_SSH_COMMAND=ssh -o BatchMode=yes")
+	}
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	if err := cmd.Run(); err != nil {
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			return fmt.Errorf("%w: %s", err, msg)
+		}
+		return err
+	}
+	return nil
 }
 
 // clone new repository
@@ -124,10 +158,19 @@ func cloneRepository(ctx context.Context, repoName, repoDestination string) (out
 		return outcomeError, fmt.Errorf("creating parent directory: %w", err)
 	}
 
-	gitRepo, err := git.PlainCloneContext(ctx, repoDestination, &git.CloneOptions{
-		URL:        buildGitURL(repoName),
-		RemoteName: remoteName,
-	})
+	var gitRepo *git.Repository
+	var err error
+	if useSSH() {
+		err = runGit(ctx, "clone", "--quiet", "--origin", remoteName, "--", buildGitURL(repoName), repoDestination)
+		if err == nil {
+			gitRepo, err = git.PlainOpen(repoDestination)
+		}
+	} else {
+		gitRepo, err = git.PlainCloneContext(ctx, repoDestination, &git.CloneOptions{
+			URL:        buildGitURL(repoName),
+			RemoteName: remoteName,
+		})
+	}
 	if err != nil {
 		return outcomeError, fmt.Errorf("cloning repository: %w", err)
 	}
@@ -140,7 +183,7 @@ func cloneRepository(ctx context.Context, repoName, repoDestination string) (out
 }
 
 // pull existing repository
-func pullRepository(ctx context.Context, gitRepo *git.Repository, repoName string) (outcome, error) {
+func pullRepository(ctx context.Context, gitRepo *git.Repository, repoName, repoDestination string) (outcome, error) {
 	logger.Print("Pulling repository: "+repoName, nil)
 
 	// update remote url with current token (in case token changed)
@@ -162,7 +205,12 @@ func pullRepository(ctx context.Context, gitRepo *git.Repository, repoName strin
 		return classifyStatus(status), nil
 	}
 
-	err = worktree.PullContext(ctx, &git.PullOptions{RemoteName: remoteName})
+	if useSSH() {
+		// --ff-only: same as go-git, and overrides a global pull.rebase
+		err = runGit(ctx, "-C", repoDestination, "pull", "--quiet", "--ff-only", remoteName)
+	} else {
+		err = worktree.PullContext(ctx, &git.PullOptions{RemoteName: remoteName})
+	}
 	switch {
 	case errors.Is(err, git.NoErrAlreadyUpToDate):
 		logger.Print("Repository already up to date: "+repoName, nil)

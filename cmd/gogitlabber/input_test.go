@@ -30,6 +30,11 @@ func TestValidateConfig(t *testing.T) {
 		{"archived exclusive", func(c *Config) { c.IncludeArchived = "exclusive" }, ""},
 		{"archived bad", func(c *Config) { c.IncludeArchived = "only" }, "invalid include_archived"},
 		{"zero concurrency", func(c *Config) { c.Concurrency = 0 }, "concurrency"},
+		{"ssh", func(c *Config) { c.GitProtocol = "ssh" }, ""},
+		{"bad protocol", func(c *Config) { c.GitProtocol = "git" }, "invalid git_protocol"},
+		{"ssh bad port", func(c *Config) { c.GitProtocol = "ssh"; c.GitSSHPort = 0 }, "invalid git_ssh_port"},
+		{"ssh no user", func(c *Config) { c.GitProtocol = "ssh"; c.GitSSHUser = "" }, "git_ssh_user is required"},
+		{"https ignores ssh port", func(c *Config) { c.GitSSHPort = 0 }, ""},
 	}
 
 	for _, tt := range tests {

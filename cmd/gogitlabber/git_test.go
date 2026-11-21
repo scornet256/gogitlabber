@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/go-git/go-git/v6"
@@ -135,5 +136,44 @@ func TestGitStatsRecord(t *testing.T) {
 	}
 	if stats.failed[0] != "e: boom" {
 		t.Errorf("failed entry = %q", stats.failed[0])
+	}
+}
+
+func TestBuildGitURL(t *testing.T) {
+	tests := []struct {
+		name string
+		cfg  *Config
+		want string
+	}{
+		{
+			"https",
+			&Config{GitBackend: "gitea", GitHost: "git.example.com", GitProtocol: "https", GitToken: "secret"},
+			"https://gitea-token:secret@git.example.com/org/repo.git",
+		},
+		{
+			"ssh",
+			&Config{GitBackend: "gitea", GitHost: "git.example.com", GitProtocol: "ssh", GitSSHPort: 2222,
+				GitSSHUser: "git", GitToken: "secret"},
+			"ssh://git@git.example.com:2222/org/repo.git",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			withConfig(t, tt.cfg)
+			if got := buildGitURL("org/repo"); got != tt.want {
+				t.Errorf("buildGitURL = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRunGitReportsStderr(t *testing.T) {
+	err := runGit(context.Background(), "-C", t.TempDir(), "pull", "--ff-only", "origin")
+	if err == nil {
+		t.Fatal("expected error outside a repository")
+	}
+	if !strings.Contains(err.Error(), "not a git repository") {
+		t.Errorf("stderr missing from error: %v", err)
 	}
 }

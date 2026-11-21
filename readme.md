@@ -7,7 +7,7 @@ It is definitely not as feature-rich as the original project... 😬
 
 The program can clone and pull all repositories you have access to on a selfhosted or SaaS provided Gitlab or Gitea
 server.
-It only supports the HTTP access method.
+It clones over HTTPS (token in the remote URL) or over SSH (`git_protocol: "ssh"`, no credentials in the remote URL).
 
 It will pull the repositories in a tree like structure same as on Gitlab or Gitea.
 
@@ -45,6 +45,9 @@ include_archived: "excluded"
 | `git_backend`      | yes      |                   | `gitlab` or `gitea`                                      |
 | `git_token`        | yes      |                   | API / access token                                       |
 | `git_host`         | no       | `gitlab.com`      | Hostname of the server                                   |
+| `git_protocol`     | no       | `https`           | `https` or `ssh`, used for clone and pull                |
+| `git_ssh_port`     | no       | `22`              | SSH port in the remote URL (only with `ssh`)             |
+| `git_ssh_user`     | no       | `git`             | SSH user in the remote URL (only with `ssh`)             |
 | `destination`      | no       | `$HOME/Documents` | Directory to clone into; `$VARS` and `~` are expanded    |
 | `concurrency`      | no       | `15`              | Number of repositories processed in parallel             |
 | `include_archived` | no       | `excluded`        | `any`, `excluded` or `exclusive` (only archived)         |
@@ -63,7 +66,14 @@ gogitlabber -config=~/.config/gogitlabber/gitlab.example.com.yaml
 Without `-config`, `~/.config/gogitlabber.yaml` is used.
 
 Repositories with local changes are skipped and listed in the summary. Only the `origin` remote is updated with the
-current token.
+current URL, so switching `git_protocol` moves existing clones on the next run.
+
+## SSH
+
+With `git_protocol: "ssh"` the remote URL is `ssh://<git_ssh_user>@<git_host>:<git_ssh_port>/<repo>.git`. Clone and
+pull run through the `git` CLI, so OpenSSH applies `~/.ssh/config` (ProxyJump, IdentityFile, known hosts). SSH runs
+in batch mode: keys need an agent or no passphrase, and unknown host keys fail instead of prompting. The token is
+still needed to list the repositories through the API.
 
 ## Access Token Permissions
 

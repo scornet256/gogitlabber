@@ -23,6 +23,9 @@ type Config struct {
 	Destination     string `yaml:"destination"`
 	GitBackend      string `yaml:"git_backend"`
 	GitHost         string `yaml:"git_host"`
+	GitProtocol     string `yaml:"git_protocol"`
+	GitSSHPort      int    `yaml:"git_ssh_port"`
+	GitSSHUser      string `yaml:"git_ssh_user"`
 	GitToken        string `yaml:"git_token"`
 	GitUserMail     string `yaml:"git_user_mail"`
 	GitUserName     string `yaml:"git_user_name"`
@@ -35,6 +38,9 @@ func defaultConfig() *Config {
 		Concurrency:     15,
 		Destination:     "$HOME/Documents",
 		GitHost:         "gitlab.com",
+		GitProtocol:     "https",
+		GitSSHPort:      22,
+		GitSSHUser:      "git",
 		IncludeArchived: "excluded",
 	}
 }
@@ -88,6 +94,19 @@ func (conf *Config) validateConfig() error {
 		return errors.New("git_token is required")
 	}
 
+	switch conf.GitProtocol {
+	case "https":
+	case "ssh":
+		if conf.GitSSHPort < 1 || conf.GitSSHPort > 65535 {
+			return fmt.Errorf("invalid git_ssh_port: %d (must be 1-65535)", conf.GitSSHPort)
+		}
+		if conf.GitSSHUser == "" {
+			return errors.New("git_ssh_user is required for git_protocol ssh")
+		}
+	default:
+		return fmt.Errorf("invalid git_protocol: %s (must be https|ssh)", conf.GitProtocol)
+	}
+
 	switch conf.IncludeArchived {
 	case "any", "excluded", "exclusive":
 	default:
@@ -116,6 +135,7 @@ func (conf *Config) logConfig(configPath string) {
 	logger.Print("Configuration: Using config file: "+configPath, nil)
 	logger.Print("Configuration: Using backend: "+conf.GitBackend, nil)
 	logger.Print("Configuration: Using host: "+conf.GitHost, nil)
+	logger.Print("Configuration: Using protocol: "+conf.GitProtocol, nil)
 	logger.Print("Configuration: Using destination: "+conf.Destination, nil)
 	logger.Print(fmt.Sprintf("Configuration: Using concurrency: %d", conf.Concurrency), nil)
 	logger.Print("Configuration: Using archived option: "+conf.IncludeArchived, nil)
